@@ -1,0 +1,23 @@
+---
+title: "Changelog 1.6"
+output: html_document
+---
+
+### __Version 1.6__
+#### 20-12-2019
+
+
+_Functionality_
+
+- Added an 'Exact' mode to only visualize connection that are both given in the search bar
+- Gene Ontology mode shows the first neighbor metabolites by default (proteins are excluded)
+- Metabolite-Metabolite reactions are added from Rhea-DB
+- Data table now shows both GO -> Metabolite as well as Metabolite -> GO
+
+_Fixes_
+
+- In Gene Ontology mode, not all connections between nodes were found due to a bug in execution order
+- Metabolite locations now show properly which metabolites are located in both Extracellular as Intracellular
+
+_Other_
+

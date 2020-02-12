@@ -1,0 +1,44 @@
+---
+title: "Advanced Topics"
+output: html_document
+---
+
+### __Neighborhood search algorithm__
+To find other proteins / metabolites that are connected to the data selected, the Neighborhood search algorithm can be used. For random graphs, usually only the number of neighbors is needed to execute this algorithm. However, since biological graphs can be highly connected, the standard algorithm will fail when faced with metabolites like H<sub>2</sub>O, ATP, Magnesium, etc. This is because these metabolites have 100s of interactions, which can be computationally very expensive. To solve this, the algorithm has been adjusted to take another parameter, the number of maximum allowed interactions. For each metabolite / protein neighbor $x$ found, it is kept in the dataset when its occurrence $N$ in the complete dataset is smaller or equal to threshold $z$ 
+
+$$N_x \le z$$
+Threshold $z$ is controlled by the user using the 'Maximum number of edges in the 'Advanced' tab within 'Settings'.
+
+------
+
+### __Weighted interactions by subcellular locations__
+The connections between metabolites and proteins created in this app have equal importance by default. However, subcellular locations of metabolites and proteins can be an indicator for the likelihood of an interaction. An interaction between a protein in the nucleus is (more) unlikely to have an interaction with a metabolite in the extracellular matrix. By default, these subcellular locations are not taken into account when constructing graphs. 
+
+The option 'Enable distances based on cellular location' creates an indication of the probability that two proteins/metabolites have a connection based on their subcellular locations. These are calculated as followed
+
+
+1. For each interaction in the database, count the number of occurences $n$ where a metabolite / protein on location $x$ has an interaction with another protein on location $y$.  
+2. This results is a matrix $M$ with dimensions $m \times n$ with $m$ being the number of subcellular locations of proteins and $n$ being the number of location of proteins + metabolites $m + l$.
+3. Normalize matrix $M$ as follows: $$M_{i,j} = \frac{M_{i,j}}{\sum_jx_{i,j} \cdot \sum_ix_{i,j}} $$
+
+4. The probability $P$ of an interaction between metabolite / protein $a$ and protein $b$ based of subcellular location is calculated as $$P_{a,b} = \max(0.01, \hspace{0.3em} \bar{p}_{a,b}) = \frac{\sum_n a_{xn} \cdot b_{yn}}{n}$$
+
+The strength of the interaction in the network is determined as $P \cdot \frac{1}{\min(P)}$ where a higher strength equals a shorter path between metabolites and proteins.
+
+
+
+------
+
+
+### __Shortest path__
+
+
+------
+
+
+
+### __Heatmap distances__
+
+$$v(x, y) = \frac{1}{d(x, y)}$$
+
+With $v$ as the calculated value, $x$ and $y$ being the start and end metabolite / protein and $d$ as a function of the number of metabolites / proteins between them. 

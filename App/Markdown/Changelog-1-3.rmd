@@ -1,0 +1,24 @@
+---
+title: "Changelog 1.3"
+output: html_document
+---
+
+### Version 1.3
+#### 08-11-2019
+
+
+_Functionality_
+
+- Statistics tab now shows info about Gene Ontology processes found in the current graph.
+- Added a link to open the 'Getting started' page for first-time users.
+
+_Fixes_
+        
+- Fixed a bug where not all protein names could be shown in short form.
+- Mouse cursor now changes to 'clickable' when hovering above a node in the network.
+
+_Other_
+
+- New layout which is more logical and ordered.
+- Changed About page to show more info about data used in this app.
+- Changed Changelog pages to RMarkdown pages for easy updates.

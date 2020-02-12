@@ -1,0 +1,38 @@
+---
+title: "Changelog 1.1"
+output: html_document
+---
+
+### Version 1.1
+#### 24-10-2019
+
+_Functionality_
+
+- Shortest path now shows subset of original network, with notifications.
+- Group plotting is now functioning properly.
+- Added an option for graph weights based on cellular locations.
+- Edge width can be adjusted by graph weights based on cellular locations.
+- Group functionality is added for Gene Ontology networks.
+        
+_Fixes_
+
+- Big improvements in speed when constructing graphs.
+- Data corrections has lead to proper protein names in graphs.
+- Heatmap now shows distances (1 / steps) to all other nodes by default.
+- Constructing GO graphs now shows the original proteins in a different shape when using neighbor nodes.
+- Placeholder text is now put in the input field to clarify data selection.
+- Fixed a bug where zooming didn't kept the shortest path graph but returned to the original graph.
+- Fixed a bug where synonyms for GO where shown.
+- Fixed a bug where shortest path would take least likely path when graph weights were used.
+- Fixed a bug where the heatmap would show incorrect data when graph weights were used.
+- Fixed a bug where selecting a node, zooming and hovering would incorrectly display names.
+- Fixed a bug where picking shortest path to the node itself would crash the app.
+- Fixed a bug where changing the node size after selecting would reset all node sizes.
+- Fixed a bug where clicking outside of a node would still show node informtion.
+
+_Other_
+
+- Moved events and pages: About, Help and Changelog to separate files.
+- About, Help and Changelog now scroll in their own tab.
+- Added a roadmap for future references.
+

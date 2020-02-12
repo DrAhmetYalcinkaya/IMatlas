@@ -1,0 +1,22 @@
+---
+title: "About"
+output: html_document
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+go_filter <- as.vector(unlist(options["GO_ID"]))
+immune_system_filter <- c(GOBPOFFSPRING[[go_filter]], go_filter)
+```
+
+### __Introduction__
+The Immuno-Metabolome Atlas is part of a master project for the Leiden Academic Centre for Drug Research. The aim of this project is to provide researchers with a tool to aid in biomarker discovery. By providing a graphical view of interactions between the metabolome and proteome, important processes and pathways can be identified. This tool relies on data from external databases. Currently `r length(unique(node.names[["Metabolite"]]))` metabolites and `r length(unique(node.names[["Protein"]]))` proteins are loaded into this app. The metabolite data has been used from HMDB. Protein-protein interaction data has been used from InnateDB.
+
+
+```{r graph, echo=FALSE}
+pie(main = "Database contents", col = c(input$col_met, input$col_pro), labels = c("Metabolites", "Proteins"), x = sapply(node.names[c("Metabolite", "Protein")], function(x) return(length(unique(x)))))
+```
+
+### __Gene Ontology__
+To support the visualisations, supplemental data like Gene Ontologies (GO) have been added. The addition of `r length(immune_system_filter)` GO biological processes of the innate immune response provides instant insight into the data plotted. Statistics about the GO processes can be seen in the 'Statistics' tab when data is plotted. P-values are calculated by performing the Fisher Exact test on a 2x2 table. These p-values are corrected for multiple testing to prevent 'p-hacking'. This is done by applying a False Discovery Rate (FDR) on the p-values found.

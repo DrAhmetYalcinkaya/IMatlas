@@ -1,0 +1,23 @@
+---
+title: "Changelog 1.4"
+output: html_document
+---
+
+### __Version 1.4__
+#### 04-12-2019
+
+
+_Functionality_
+
+- Changed protein data from InnateDB to StringDB + GO
+- Data tab allows for picking direct, first indirect or second indirect datasets.
+- Linked preprocessing to this shiny app using YAML configurations
+
+_Fixes_
+
+- Overall stability issues have been fixed
+
+_Other_
+
+- Organized the settings tab into compartments
+- Added an experimental settings tab which indicates bugs may appear when used

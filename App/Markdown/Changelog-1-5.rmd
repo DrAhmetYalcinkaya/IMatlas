@@ -1,0 +1,27 @@
+---
+title: "Changelog 1.5"
+output: html_document
+---
+
+### __Version 1.5__
+#### 09-12-2019
+
+
+_Functionality_
+
+- Data table shows metabolites with associated GO's
+- Clicking on a metabolite in the graph shows its associated GO's
+- Selecting a shortest path will recalculate the GO's in statistics
+- Data table shows a table with metabolite per Extra- and Intracellular locations
+
+_Fixes_
+
+- Fixed an issue where the 'Hover' mode for node labels crashed the app
+- Node labels are now instantly updated when switching options
+
+
+_Other_
+
+- Organized Data Table visualizations in compartments
+- Organized Statistical visualizations in compartments
+- Fixed some visual bugs that would cause the screen to scroll down when selecting a lot of metabolites
