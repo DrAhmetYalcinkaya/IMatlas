@@ -1,0 +1,2 @@
+19/03 	Trained on datacamp: finished Shiny dashboard course
+	the processess in app.R are now clear to me 
