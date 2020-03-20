@@ -1,2 +1,5 @@
 19/03 	Trained on datacamp: finished Shiny dashboard course
 	the processess in app.R are now clear to me 
+20/03	Started COVID-19-adr project: 
+	-Searched for a list of drugs for the analysis
+	-Introduction draft
