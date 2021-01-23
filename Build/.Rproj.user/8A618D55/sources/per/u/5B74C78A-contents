@@ -1,0 +1,3 @@
+devtools::install_github("Pascallio/discogsAPI")
+library(discogsAPI)
+

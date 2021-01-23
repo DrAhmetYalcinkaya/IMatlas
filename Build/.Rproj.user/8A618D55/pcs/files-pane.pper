@@ -1,0 +1,9 @@
+{
+    "path" : "~/DiscogsAPI/discogsAPI/Build",
+    "sortOrder" : [
+        {
+            "ascending" : true,
+            "columnIndex" : 2
+        }
+    ]
+}

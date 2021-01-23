@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1604845684757.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2283863732",
+    "id" : "6A7DE27D",
+    "lastKnownWriteTime" : 1604837946,
+    "last_content_update" : 1604837946,
+    "path" : "~/DiscogsAPI/discogsAPI/Build/build.R",
+    "project_path" : "build.R",
+    "properties" : {
+        "cursorPosition" : "4,0",
+        "scrollLine" : "0"
+    },
+    "relative_order" : 5,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
