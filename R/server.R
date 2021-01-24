@@ -2,6 +2,12 @@
 #'@param input 
 #'@param output
 #'@param session
+#'@import igraph 
+#'@importFrom waiter waiter_show spin_flower waiter_hide
+#'@importFrom shinyalert shinyalert
+#'@importFrom formattable formattable format_table
+#'@importFrom shinyjs runjs show
+#'@importFrom colourpicker colourInput
 server <- function(input, output, session) {
     env <- parent.frame()
     input <<- input
@@ -9,7 +15,8 @@ server <- function(input, output, session) {
     output <<- output
     sel <<- ""
     env$graph <- NULL
-    waiter_show(html = div(h2("Loading the Immuno-Atlas"), spin_flower()))
+    waiter::waiter_show(html = div(h2("Loading the Immuno-Atlas"),
+                                   waiter::spin_flower()))
     is_reactive <<- TRUE
     prot_files <<- list("Direct" = "Protein-protein.csv", 
                      "First Indirect" = "Protein-protein_1.csv", 
@@ -25,12 +32,6 @@ server <- function(input, output, session) {
                                              selected = NULL, server = T,  
                                              choices = choices()), once = T)
     observe_inputs()
-  
-    #onclick("help_link", updateTabItems(session, "tabs", "getting-started"))
-    #onclick("advanced_link", updateTabItems(session, "tabs", "advanced-topics"))
-    #output$help_link <- renderUI(a("First time using this app? Click here on how to get started.", href="#shiny-tab-getting-started"))
-    #output$file1 <- renderUI(fileInput("file1", "Choose CSV File", width = "100%", multiple = FALSE, accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")))
-    
     
     observeEvent(c(input$actionGraph, input$action), env$graph <<- build_button(sel), ignoreInit = T)
   
@@ -62,7 +63,7 @@ server <- function(input, output, session) {
 
   
     observeEvent(c(input$settings_buttonGraph, input$settings_button), ignoreInit = T, {
-        shinyalert(title = "Settings", showCancelButton = T, cancelButtonText = "Reset", 
+      shinyalert::shinyalert(title = "Settings", showCancelButton = T, cancelButtonText = "Reset", 
                    closeOnClickOutside = F, html = T, size = "l", create_settings(), 
                    callbackR = function(x) if (!x) default_settings())
     })
@@ -74,7 +75,7 @@ server <- function(input, output, session) {
                                       "go", "class", "superclass", "pathway")]
         f <- formattable::formattable(as.data.frame(t(df)))
         modal <- div(style = "overflow-y:scroll; max-height: 600px", HTML(formattable::format_table(f)))
-        shinyalert(title = "Info", closeOnClickOutside = T, html = T, modal, size = "m")
+        shinyalert::shinyalert(title = "Info", closeOnClickOutside = T, html = T, modal, size = "m")
         runjs('Shiny.setInputValue("click_id", null, {priority: "event"});')
     })
   

@@ -8,6 +8,9 @@ build_button(
    filter
 )
 }
+\arguments{
+\item{filter}{String containing the filter to be used / searched.}
+}
 \description{
 Build a new graph
 }

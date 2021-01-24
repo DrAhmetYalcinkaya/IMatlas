@@ -2,7 +2,6 @@
 import pip
 import importlib
 import os
-import yaml
 import sys
 from pathlib import Path
 from Preprocessing_hmdb import HMDB
@@ -52,10 +51,11 @@ def main(config_path):
 
 
 if __name__ == "__main__":
-    config_path = "C:/Users/pascal/Documents/ImmuneMetAtlas/App/config.yaml"
+    config_path = "../config.yaml"
     if len(sys.argv) > 1:
         config_path = sys.argv[1]
 
+    install_packages("yaml")
     install_packages("numpy")
     install_packages("pandas")
     main(config_path)

@@ -12,6 +12,18 @@ data_filter(
    search_mode = "Interacts"
 )
 }
+\arguments{
+\item{filter}{String containing the search term.}
+
+\item{neighbours}{Integer containing the number of neighbours to be found}
+
+\item{max_neighbours}{Integer representing the maximum number of edges for each neighbour}
+
+\item{type}{String containing the type of search.}
+
+\item{search_mode}{String of either 'Interacts' or 'Between'. Interacts finds the first neighbour
+of the given search, while Between only returns interactions between the proteins / metabolites given.}
+}
 \description{
 Retrieve data given a search
 }

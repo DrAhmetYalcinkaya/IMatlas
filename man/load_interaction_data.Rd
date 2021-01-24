@@ -12,6 +12,10 @@ load_interaction_data(
 }
 \arguments{
 \item{options}{YAML list containing field-value pairs.}
+
+\item{prot_file}{String name of the protein file}
+
+\item{full_load}{Boolean value for loading everything or just the protein-protein interaction file}
 }
 \description{
 Load interaction data

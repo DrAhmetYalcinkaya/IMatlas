@@ -33,17 +33,6 @@ observe_inputs <- function(){
     })
 }
 
-
-load_markup_data <- function(){
-    output$about_content <- renderUI(HTML(renderMarkdown("Markdown/about.rmd")))
-    output$getting_started <- renderUI(HTML(renderMarkdown("Markdown/getting-started.rmd")))
-    output$controls <- renderUI(HTML(renderMarkdown("Markdown/Controls.rmd")))
-    output$advanced_topics <- renderUI(withMathJax(HTML(renderMarkdown("Markdown/Advanced-topics.rmd"))))
-    sapply(seq(0:7), function(version){
-        output[[paste0("changelog_1_", version)]] <- renderUI(HTML(renderMarkdown(paste0("Markdown/Changelog-1-", version, ".rmd"))))
-    })
-}
-
 #'@title Load interaction data
 #'@usage load_interaction_data(
 #'    options,
@@ -51,8 +40,9 @@ load_markup_data <- function(){
 #'    full_load = TRUE
 #')
 #'@param options YAML list containing field-value pairs. 
-#'@param prot_file
-#'@param full_load
+#'@param prot_file String name of the protein file
+#'@param full_load Boolean value for loading everything or just the protein-protein interaction file
+#'@importFrom plyr rbind.fill
 load_interaction_data <- function(options, prot_file="Protein-protein.csv", full_load = T){
       setwd(options$folder)
       if (full_load){
@@ -78,21 +68,23 @@ load_interaction_data <- function(options, prot_file="Protein-protein.csv", full
           enzyme_df <<- read_file("Ec_numbers.csv", "ID")
           prot_trans <<- read_file("Protein_transporter.csv", "ID")
           cofactor_df <<- read_file("Cofactors.csv", "ID")
-          heatmap_df <<- read_file("heatmap_matrix.csv", "V1")
-          heatmap_df <<- heatmap_df[,-1]
+          #heatmap_df <<- read_file("heatmap_matrix.csv", "V1")
+          #heatmap_df <<- heatmap_df[,-1]
       }
     
       pp_interactions <<- read_file(prot_file)
       pm_interactions <<- pm_interactions[which(pm_interactions$To %in% c(t(pp_interactions))),]
       interactions <<- rbind.fill(pp_interactions, mm_interactions, pm_interactions)
-      setwd(options$shiny_folder)
 }
 
 #'@title Build a new graph
 #'@usage build_button(
 #'    filter
 #')
-#'@param filter
+#'@param filter String containing the filter to be used / searched.
+#'@importFrom plotly renderPlotly plot_ly layout
+#'@importFrom shinyjs disable enable
+#'@importFrom DT renderDataTable
 build_button <- function(filter){
     shiny::validate(need(filter, ""))
     updateTabItems(session, "tabs", "network")
@@ -108,7 +100,7 @@ build_button <- function(filter){
         output$heatmapplot <- renderPlotly(get_heatmap_plot(graph))
         output$barplot_centrality <- renderPlotly(get_barplot(graph))
         output$barplot_gos <- renderPlotly(get_go_barplot(graph))
-        output$scatter_plot <- renderPlotly(get_2d_scatter(graph))
+        #output$scatter_plot <- renderPlotly(get_2d_scatter(graph))
         output$datatable_nodes <- renderDataTable(get_node_table(graph))
         output$datatable_edges <- renderDataTable(get_edge_table(graph))
     }
@@ -141,6 +133,7 @@ get_edge_table <- function(g){
 #'    g
 #')
 #'@param g iGraph object obtained from to_graph() or get_graph()
+#'@importFrom DT datatable
 get_node_table <- function(g){
     df <- igraph::as_data_frame(g, what = "vertices")[,c(
         "id", "centrality", "enzyme", "cofactor", "type", 
@@ -154,29 +147,34 @@ get_node_table <- function(g){
 #'     g
 #')
 #'@param g iGraph object obtained from to_graph() or get_graph()
+#'@importFrom plotly ggplotly
+#'@importFrom ggplot2 ggplot geom_bar theme_minimal theme theme_void
 get_go_barplot <- function(g){
     d <- unlist(igraph::as_data_frame(g, what = "vertices")$go_statistics)
     df <- unique(data.frame(go = names(d), go_statistics = d))
     if (nrow(df) > 0){
-        return(ggplotly(ggplot(df, aes(x = go, y = go_statistics)) + 
+        return(plotly::ggplotly(ggplot2::ggplot(df, aes(x = go, y = go_statistics)) + 
                             geom_bar(stat = "identity") + theme_minimal() + 
                             theme(axis.text.x = element_text(angle = 45)))
         )
     } else {
-        return(ggplotly(ggplot(NULL) + theme_void())) # find solution for not rendering plotly if no GO are present.
+        return(plotly::ggplotly(ggplot(NULL) + theme_void())) # find solution for not rendering plotly if no GO are present.
     } 
 }
-
 #'@title Get barplot for Closeness scores
 #'@usage get_barplot(
 #'    g
 #')
 #'@param g iGraph object obtained from to_graph() or get_graph()
+#'@importFrom dplyr filter
+#'@importFrom plotly ggplotly
+#'@importFrom ggplot2 ggplot geom_bar xlab theme_minimal theme aes element_text
+#'@importFrom stats reorder
 get_barplot <- function(g){
     df <- igraph::as_data_frame(g, what = "vertices")
     df <- df %>% dplyr::filter(type == "Metabolite")
     df$name <- make.unique(substring(df$name, 1, 40))
-    ggplotly(ggplot(df, aes(x =  reorder(name, -centrality), y = centrality, label = name)) + 
+    ggplotly(ggplot(df, aes(x = reorder(name, -centrality), y = centrality, label = name)) + 
                  geom_bar(stat = "identity") + xlab("") + theme_minimal() + 
                  theme(axis.text.x = element_text(angle = 45)), 
              tooltip = c("name", "centrality"))
@@ -187,14 +185,16 @@ get_barplot <- function(g){
 #'    g
 #')
 #'@param g iGraph object obtained from to_graph() or get_graph()
+#'@importFrom heatmaply heatmaply
+#'@importFrom RColorBrewer brewer.pal
 get_heatmap_plot <- function(g){
-    df <- 1 / shortest.paths(g) 
+    df <- 1 / igraph::shortest.paths(g) 
     df[is.infinite(df)] <- NA
     rownames(df) <- substring(rownames(df), 1, 30)
     colnames(df) <- substring(colnames(df), 1, 30)
-    heatmaply(df, na.value = "grey", symm = T, colors = brewer.pal(9, "Blues") , plot_method = "plotly")
+    heatmaply::heatmaply(df, colors = RColorBrewer::brewer.pal(9, "Blues"), 
+                         na.value = "grey", symm = T, plot_method = "plotly")
 }
-
 
 #'@title Retrieve data given a search
 #'@usage data_filter(
@@ -204,11 +204,12 @@ get_heatmap_plot <- function(g){
 #'    type = "Gene Ontology",
 #'    search_mode = "Interacts"
 #')
-#'@param filter
-#'@param neighbours
-#'@param max_neighbours
-#'@param type
-#'@param search_mode
+#'@param filter String containing the search term.
+#'@param neighbours Integer containing the number of neighbours to be found
+#'@param max_neighbours Integer representing the maximum number of edges for each neighbour
+#'@param type String containing the type of search.
+#'@param search_mode String of either 'Interacts' or 'Between'. Interacts finds the first neighbour
+#'of the given search, while Between only returns interactions between the proteins / metabolites given.
 data_filter <- function(filter, neighbours=0, max_neighbours=Inf, type = "Gene Ontology", search_mode = "Interacts"){
     if (search_mode == "Shortest Path"){
         data.selected <- get_shortest_path_graph(graph_from_data_frame(interactions), filter)

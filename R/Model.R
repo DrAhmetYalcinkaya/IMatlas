@@ -8,6 +8,7 @@
 #'@examples
 #'options = list(GO_ID = "GO:0002376")
 #'go_vec <- get_gos(options)
+#'@importFrom httr GET content
 get_gos <- function(options){
     url <- sprintf("https://www.ebi.ac.uk/QuickGO/services/ontology/go/terms/%s/descendants", options[["GO_ID"]])
     response <- httr::content(httr::GET(url))$results[[1]]$descendants
@@ -22,8 +23,9 @@ get_gos <- function(options){
 #'@param source String path of the file location.
 #'@param index_column (optional) String name of column
 #'file <- read_file("metabolites.csv", "Name")
+#'@importFrom data.table fread
 read_file <- function(source, index_column){
-    df <- suppressWarnings(fread(source, sep = ",", data.table = F))
+    df <- suppressWarnings(data.table::fread(source, sep = ",", data.table = F))
     if (!missing(index_column)){
       df[,index_column] <- make.unique(df[,index_column])
       rownames(df) <- df[,index_column]
@@ -111,6 +113,7 @@ get_proteins_by_goid <- function(ids){
 #'    names
 #')
 #'@param names Vector of Gene Ontology names
+#'@importFrom dplyr inner_join
 get_proteins_by_go <- function(names){
     go_name_df <- change_index(go_name_df, "Name")
     ids <- go_name_df[names, ]$GOID
@@ -135,6 +138,7 @@ get_interactions <- function(df, ids, mode){
     }
     return(unique(c(f, t)))
 }
+
 
 #'@title Get metabolite-metabolite interactions
 #'@usage get_mm_interactions(
@@ -180,10 +184,11 @@ get_pm_interaction_ids <- function(ids, mode = "both"){
 #')
 #'@param df Dataframe containing protein-protein interactions found
 #'@param conf Integer between 0 (low) and 1000 (high) determining the confidence level 
+#'@importFrom dplyr left_join filter
 filter_on_confidence <- function(df, conf=0){
-  df <- left_join(df, pp_interactions, by = c("From", "To", "Confidence")) %>%
-    filter(Confidence >= conf | is.na(Confidence)) %>%
-    as.data.frame()
+  df <- dplyr::left_join(df, pp_interactions, by = c("From", "To", "Confidence")) %>%
+        dplyr::filter(Confidence >= conf | is.na(Confidence)) %>%
+        as.data.frame()
   return(df[,c("From", "To")])
 }
 
@@ -337,9 +342,10 @@ get_ids_from_class <- function(filter){
 #'    ids
 #')
 #'@param ids Vector of protein / metabolite identifiers
+#'@importFrom dplyr coalesce
 convert_ids_to_names <- function(ids){
-    vec <- coalesce(get_metabolite_names(ids), get_protein_names(ids))
-    return(coalesce(vec, ids))
+    vec <- dplyr::coalesce(get_metabolite_names(ids), get_protein_names(ids))
+    return(dplyr::coalesce(vec, ids))
 }
 
 #'@title Convert names to identifiers
@@ -347,9 +353,10 @@ convert_ids_to_names <- function(ids){
 #'    names
 #')
 #'@param names Vector of protein / metabolite names
+#'@importFrom dplyr coalesce
 convert_names_to_ids <- function(names){
-  vec <- coalesce(get_metabolite_ids(names), get_protein_ids(names))
-  return(coalesce(vec, names))
+  vec <- dplyr::coalesce(get_metabolite_ids(names), get_protein_ids(names))
+  return(dplyr::coalesce(vec, names))
 }
 
 #'@title Return a network / graph 

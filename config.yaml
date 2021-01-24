@@ -1,0 +1,15 @@
+## Adjust this file to your liking. 
+## This file is used for both the preprocessing and the Rshiny app
+## This allows for Python and R to know file locations and settings
+## Do not alter the preprocessing script unless adaptations are necessary
+
+# Folder for data files:
+folder: C:/Users/pascal/Documents/ImmuneMetAtlas/Data/
+
+# RShiny folder
+shiny_folder: C:/Users/pascal/Documents/ImmuneMetAtlas/App/
+
+# Parse Options
+
+# Gene Ontology identifier to use for filter (GO:0045087 = Innate Immune response)
+GO_ID: GO:0002376

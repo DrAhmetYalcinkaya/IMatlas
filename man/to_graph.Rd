@@ -14,6 +14,3 @@ to_graph(
 \description{
 Convert interaction dataframe to iGraph object
 }
-\examples{
-
-}

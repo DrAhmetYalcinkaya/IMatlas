@@ -1,12 +1,20 @@
 #'@title Load Data
 #'@description Variables and files are loaded to the global environment to 
 #'be used by other functions inside this package.
-#'@usage load_data()
+#'@usage load_data(
+#'    config,
+#'    neighbours = 0
+#')
+#'@param config String path to a YAML configuration file
+#'@param neighbours Integer value representing the number of 'steps' allowed for protein-protein interactions
 #'@examples
 #'load_data()
+#'@importFrom yaml read_yaml
+#'@importFrom GO.db GOBPOFFSPRING 
+#'@importFrom AnnotationDbi Term
 load_data <- function(config, neighbours=0){
     env <- parent.frame()
-    options <- yaml.load_file(config)
+    options <- yaml::read_yaml(config)
     prot_files <- list("Direct" = "Protein-protein.csv", 
                        "First Indirect" = "Protein-protein_1.csv", 
                        "Second Indirect" = "Protein-protein_2.csv")
@@ -18,12 +26,12 @@ load_data <- function(config, neighbours=0){
     
     load_interaction_data(options, prot_file = prot_files[[names(prot_files)[neighbours + 1]]])
     offspring <<- as.list(GO.db::GOBPOFFSPRING)
-    go_name_df <- data.frame(GOID = as.vector(names(offspring)), Name = as.vector(Term(names(offspring))))
+    go_name_df <- data.frame(GOID = as.vector(names(offspring)), 
+                             Name = as.vector(AnnotationDbi::Term(names(offspring))))
     rownames(go_name_df) <- go_name_df$GOID
     go_name_df <- go_name_df[c(offspring[[options$GO_ID]], options$GO_ID),]
     env$go_name_df <- go_name_df[which(go_name_df$GOID %in% protein_go_df$GOID),]
     env$options <- options
-    setwd(options$shiny_folder)
     env$is_reactive = F
 }
 
@@ -42,11 +50,16 @@ get_go_terms <- function(){
 #'    neighbours = 0,
 #'    max_neighbours = Inf,
 #'    type = "Gene Ontology",
-#'    simple = F
+#'    simple = F,
+#'    search_mode = "Interacts"
 #')
 #'@param filter String containing the search term.
 #'@param neighbours Integer containing the number of neighbours to be found
+#'@param max_neighbours Integer representing the maximum number of edges for each neighbour
 #'@param type String containing the type of search.
+#'@param simple Boolean value indicating to return a barebone graph or including metadata.
+#'@param search_mode String of either 'Interacts' or 'Between'. Interacts finds the first neighbour
+#'of the given search, while Between only returns interactions between the proteins / metabolites given.
 #'@examples
 #'# Construct a GO graph
 #'g <- get_graph("microglial cell activation")
@@ -54,12 +67,13 @@ get_go_terms <- function(){
 #'
 #'# Construct a graph using Metabolites and/or Proteins
 #'g <- get_graph("L-Asparagine", type = "Metabolites/Proteins")
+#'@importFrom igraph simplify graph_from_data_frame
 get_graph <- function(filter, neighbours = 0, max_neighbours=Inf, simple = F,
                       type = "Gene Ontology", search_mode = "Interacts"){
     df <- data_filter(filter, neighbours, max_neighbours, type, search_mode)
     if (nrow(df) > 0){
         if (simple){
-            g <- simplify(graph_from_data_frame(df, directed = F))
+            g <- igraph::simplify(igraph::graph_from_data_frame(df, directed = F))
         } else {
             g <- suppressWarnings(to_graph(df))
         }
@@ -80,8 +94,10 @@ get_graph <- function(filter, neighbours = 0, max_neighbours=Inf, simple = F,
 #'# Get GOs associated with metabolites
 #'g <- get_graph("microglial cell activation")
 #'get_metabolite_metadata(g, "go")
+#'@importFrom igraph get.data.frame
+#'@importFrom dplyr filter select all_of
 get_metabolite_metadata <- function(graph, metadata){
-    df <-igraph::get.data.frame(graph, "vertices") %>%
+    df <- igraph::get.data.frame(graph, "vertices") %>%
         dplyr::filter(type == "Metabolite") %>%
         dplyr::select(name, all_of(metadata))
   
@@ -103,7 +119,11 @@ example_graph <- function(){
 }
 
 
-
+#'@title Return a long-format DataFrame with GO-Pvalue combinations per metabolite
+#'@usage get_metabolite_go_pvalues(
+#'    graph
+#')
+#'@param graph igraph object 
 get_metabolite_go_pvalues <- function(graph){
     result <- list()
     l <- get_metabolite_metadata(graph, "go")

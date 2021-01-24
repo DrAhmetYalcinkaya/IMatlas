@@ -36,7 +36,6 @@ h4 {
 
 #sidebarItemExpanded {
     height: 88vh !important;
-    /*overflow-y: hidden; */
 }
 
 .shiny-notification {
@@ -59,10 +58,6 @@ h4 {
 
 }
 
-.sidebar {
-    /* background-color: rgb(34, 45, 50) !important; */
-
-}
 
 .info-box-text {
     font-family: 'Raleway', sans-serif;
@@ -109,11 +104,6 @@ h4 {
 	background-color:white; 
 	width: 100vw;  
 	 overflow: hidden !important; 
-}
-
-.skin-blue {
-    /* overflow: hidden !important; */
-
 }
 
 #sidebarCollapsed {
@@ -189,22 +179,6 @@ h4 {
     box-sizing: content-box; /* So the width will be 100% + 17px */
 }
 
-#about {
-	width: 80vw !important;
-}
-
-#treeOutput {
-	margin-top: 1vh;
-	height: 67vh !important; 
-	width: 80vw !important;
-}
-
-.tippy-tooltip.blank-theme {
-    background-color: rgb(255, 255, 255);
-	background-color: rgba(255,255,255,0);
-	color: black;
-	font-size: 1.3vh;
-}
 
 .shiny-notification {
 	position:fixed;

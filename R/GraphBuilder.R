@@ -3,16 +3,13 @@
 #'    df
 #')
 #'@param df Dataframe of interactions between nodes
-#'@examples
-#'
 to_graph <- function(df){
-    g <- simplify(graph_from_data_frame(df, directed = F))
-
-    layout <- as.data.frame(layout.fruchterman.reingold(g))
+    g <- igraph::simplify(igraph::graph_from_data_frame(df, directed = F))
+    layout <- as.data.frame(igraph::layout.fruchterman.reingold(g))
     V(g)$x <- layout[,1]
     V(g)$y <- layout[,2]
     
-    V(g)$id <- V(g)$name
+    V(g)$id <- igraph::V(g)$name
     V(g)$name <- make.unique(convert_ids_to_names(V(g)$id))
     V(g)$centrality <- round(harmonized_closeness(g), 3)
     V(g)$cluster <- igraph::components(g)$membership
@@ -32,7 +29,6 @@ to_graph <- function(df){
 #'    g
 #')
 #'@param g iGraph object obtained from to_graph() or get_graph()
-#'@examples
 add_metadata_to_graph <- function(g){
     V(g)$enzyme <- get_enzymes(V(g)$id)
     V(g)$cofactor <- get_cofactors(V(g)$id)
@@ -44,6 +40,7 @@ add_metadata_to_graph <- function(g){
     return(g)
 }
 
+#'@title Adding colors to vertices of the graph
 #'@usage add_vertice_colors(
 #'    g,
 #'    mets
@@ -74,6 +71,7 @@ add_vertice_colors <- function(g, mets){
     return(g)
 }
 
+#'@title Adding class metadata to vertices
 #'@usage add_class_metadata(
 #'    g, 
 #'    mets
@@ -93,6 +91,7 @@ add_class_metadata <- function(g, mets){
     return(g)
 }
 
+#'@title Adding superclass metadata to vertices
 #'@usage add_superclass_metadata(
 #'    g,
 #'    mets
@@ -100,8 +99,9 @@ add_class_metadata <- function(g, mets){
 #'@param g iGraph object obtained from to_graph() or get_graph()
 #'@param mets iGraph identifiers of metabolites
 #'@examples
+#'@importFrom RColorBrewer brewer.pal
 add_superclass_metadata <- function(g, mets){
-    class_colors <- brewer.pal(n = length(mets), name = "Dark2")
+    class_colors <- RColorBrewer::brewer.pal(n = length(mets), name = "Dark2")
     
     V(g)$superclass <- NA
     V(g)$superclass_alpha <- 0
@@ -113,8 +113,9 @@ add_superclass_metadata <- function(g, mets){
     return(g)
 }
 
-
-
+#'@title Convert a igraph object to ggplot scatterplot
+#'@importFrom ggplot2 ggplot geom_point aes_string theme_minimal geom_text
+#'scale_fill_discrete
 to_gg_plot <- function(g, df){
   if (!is_reactive) graph_filter <- reactiveVal()
     Name <- sprintf("Name: %s<br>Centrality: %.2f", V(g)$name, V(g)$centrality)
@@ -138,21 +139,20 @@ to_gg_plot <- function(g, df){
     return(gg)
 }
 
-#'@title Convert graph object to an interactive Plotly 
+#'@title Convert igraph object to an interactive Plotly 
 #'@usage igraph_to_plotly2(
 #'    g
 #')
 #'@param g iGraph object obtained from to_graph() or get_graph()
-#'@examples
+#'@importFrom plotly ggplotly layout config
+#'@importFrom htmlwidgets onRender
 to_plotly <- function(g){
-    #options(viewer = NULL)
-
   ax <- list(title = "", zeroline = FALSE, showline = FALSE, showticklabels = FALSE,
              showgrid = FALSE, autorange = TRUE
   )
   df <- igraph::as_data_frame(g, what = "vertices")
   p <- ggplotly(to_gg_plot(g, df),  width = 1600, tooltip = c("text")) %>%
-    layout(showlegend = T, xaxis = ax, yaxis = ax) %>% 
+    plotly::layout(showlegend = T, xaxis = ax, yaxis = ax) %>% 
     plotly::config(scrollZoom = TRUE, toImageButtonOptions = list(format = "svg"), 
                    displaylogo = F, editable = F, modeBarButtonsToRemove = 
                      list("lasso2d", "hoverCompareCartesian", 
@@ -165,17 +165,16 @@ to_plotly <- function(g){
     p$x$data[[i]]$marker$color <- "#232F34"
     p$x$data[[i]]$mode <- paste0(p$x$data[[i]]$mode, "+markers")
   }
-  
   return(p)
 }
 
+#'@title Return the coordinates for edges
 #'@usage get_edge_shapes(
 #'    g,
 #'    coord
 #')
 #'@param g iGraph object obtained from to_graph() or get_graph()
 #'@param coord Dataframe containing coordinates of the nodes
-#'@examples
 get_edge_shapes <- function(g, coord){
   if (!is_reactive) col_edge <- reactiveVal("black")
     
@@ -207,17 +206,18 @@ get_edge_shapes <- function(g, coord){
   return(edge_shapes)
 }
 
+#'@title Calculate the harmonized closeness of a graph
 #'@usage harmonized_closeness(
 #'    g
 #')
 #'@param g iGraph object obtained from to_graph() or get_graph()
-#'@examples
 harmonized_closeness <- function(g){
   df <- 1 / shortest.paths(g) 
   df[is.infinite(df)] <- 0
   as.vector(rowSums(df) / (nrow(df) - 1)) 
 }
 
+#'@title Calculate GO pvalues using Fisher's test
 #'@usage fishers_test(
 #'    id,
 #'    all_go_in_network,
@@ -227,19 +227,22 @@ harmonized_closeness <- function(g){
 #'@param all_go_in_network Table of Gene Ontology counts in the current network
 #'@param all_go Table of Gene Ontology counts in the database
 #'@examples
+#'@importFrom stats fisher.test
 fishers_test <- function(id, all_go_in_network, all_go){
     a <- all_go_in_network[id]
     b <- sum(all_go_in_network) - a
     c <- all_go[id] - a
     d <- sum(all_go) - a - b - c
-    return(fisher.test(matrix(c(a, b, c, d), ncol = 2, byrow = T))$p.value)
+    return(stats::fisher.test(matrix(c(a, b, c, d), ncol = 2, byrow = T))$p.value)
 }
 
+#'@title Calculate all GO pvalues in the graph
 #'@usage calculate_pvalues(
 #'    g
 #')
 #'@param g iGraph object obtained from to_graph() or get_graph()
 #'@examples
+#'@importFrom stats p.adjust
 calculate_pvalues <- function(g){
   to_search <- unlist(V(g)$go)
   ids <- table(get_go_ids_by_go(to_search))
@@ -253,12 +256,12 @@ calculate_pvalues <- function(g){
   return(vec)
 }
 
+
 #'@title Assign GOs to metabolites & proteins
 #'@usage get_gos_per_cluster(
 #'    g
 #')
 #'@param g iGraph object obtained from to_graph() or get_graph()
-#'@examples
 get_gos_per_cluster <- function(g, pvalues){
   gos_per_cluster <- lapply(unique(V(g)$cluster), function(cl){
     cluster_vertices <- V(g)[which(V(g)$cluster == cl)]
@@ -278,7 +281,6 @@ get_gos_per_cluster <- function(g, pvalues){
 #')
 #'@param g iGraph object obtained from to_graph() or get_graph()
 #'@param mets iGraph identifiers of metabolites
-#'@examples
 construct_metabolite_go_network <- function(g, mets){
   mets <- get_metabolite_vertice_ids(g)
   df <- do.call(rbind, lapply(V(g)[mets], function(n){
@@ -286,7 +288,7 @@ construct_metabolite_go_network <- function(g, mets){
   }))
   rownames(df) <- 1:nrow(df)
   cen <- V(g)[mets]$centrality
-  g <- simplify(graph_from_data_frame(df, directed = F))
+  g <- igraph::simplify(igraph::graph_from_data_frame(df, directed = F))
   V(g)$centrality <- 0
   V(g)[mets]$centrality <- cen
   return(g)
@@ -299,13 +301,13 @@ construct_metabolite_go_network <- function(g, mets){
 #')
 #'@param g iGraph object obtained from to_graph() or get_graph()
 #'@param cofactors Vector of metabolite cofactors
-#'@examples
+#'@importFrom stats na.omit
 get_cofactor_edge_ids <- function(g, cofactors){
   ind <- which(cofactors %in% V(g)$id)
   cofactors <- cofactors[ind]
   l <- unlist(as.vector(sapply(na.omit(cofactors), function(n) which(V(g)$id == n))))
   vec <- data.frame("From" = ind, "To" = l)
-  return(unique(get.edge.ids(g, c(t(vec)))))
+  return(unique(igraph::get.edge.ids(g, c(t(vec)))))
 }
 
 #'@title Get indexes of enzymes vertices by identifier
@@ -313,7 +315,6 @@ get_cofactor_edge_ids <- function(g, cofactors){
 #'    g
 #')
 #'@param g iGraph object obtained from to_graph() or get_graph()
-#'@examples
 get_enzyme_vertice_ids <- function(g){
   return(which(!is.na(V(g)$enzyme)))
 }
@@ -323,9 +324,8 @@ get_enzyme_vertice_ids <- function(g){
 #'    g
 #')
 #'@param g iGraph object obtained from to_graph() or get_graph()
-#'@examples
 get_protein_vertice_ids <- function(g){
-  return(which(!startsWith(V(g)$id, "HMDB") & !startsWith(V(g)$id, "RHEA")))
+  return(which(!startsWith(V(g)$id, "HMDB")))
 }
 
 #'@title Get indexes of metabolites vertices by identifier
@@ -333,7 +333,6 @@ get_protein_vertice_ids <- function(g){
 #'    g
 #')
 #'@param g iGraph object obtained from to_graph() or get_graph()
-#'@examples
 get_metabolite_vertice_ids <- function(g){
   return(which(startsWith(V(g)$id, "HMDB")))
 }
@@ -343,7 +342,6 @@ get_metabolite_vertice_ids <- function(g){
 #'    g
 #')
 #'@param g iGraph object obtained from to_graph() or get_graph()
-#'@examples
 get_transporter_vertice_ids <- function(g){
   return(which(V(g)$id %in% prot_trans$ID))
 }
@@ -355,7 +353,6 @@ get_transporter_vertice_ids <- function(g){
 #')
 #'@param g iGraph object obtained from to_graph() or get_graph()
 #'@param id String identifier of metabolite or protein
-#'@examples
 get_vertice_id <- function(g, id){
   return(which(V(g)$id == id))
 }
@@ -365,13 +362,12 @@ get_vertice_id <- function(g, id){
 #'    g
 #')
 #'@param g iGraph object obtained from to_graph() or get_graph()
-#'@examples
 get_pp_confidences <- function(g){
   df <- igraph::get.data.frame(g, "edges")
   colnames(pp_interactions) <- c("from", "to", "confidence")
   df$from <- get_protein_ids(df$from)
   df$to <- get_protein_ids(df$to)
-  return(suppressMessages(left_join(df, pp_interactions)$confidence))
+  return(suppressMessages(dplyr::left_join(df, pp_interactions)$confidence))
 }
 
 #'@title Get edge ids between nodes of interest using shortest paths.
@@ -381,10 +377,10 @@ get_pp_confidences <- function(g){
 #')
 #'@param g iGraph object obtained from to_graph() or get_graph()
 #'@param combinations
-#'@examples
 get_edge_ids <- function(g, combinations){
     unique(unlist(apply(combinations, 1, function(x){
-        unlist(shortest_paths(g, V(g)[x[1]], V(g)[x[2]], mode = "all", output = "epath")$epath)
+        unlist(igraph::shortest_paths(g, V(g)[x[1]], V(g)[x[2]], 
+                                      mode = "all", output = "epath")$epath)
     })))
 }
 
@@ -393,18 +389,18 @@ get_edge_ids <- function(g, combinations){
 #'    g,
 #'    filter
 #') 
-#'@param g iGraph object obtained from to_graph() or get_graph()
+#'@param g iGraph object obtained from to_graph(), get_graph()
 #'@param filter Names of protein/metabolites to search
-#'@examples
+#'@importFrom gtools combinations
 get_shortest_path_graph <- function(g, filter){
     filter <- convert_names_to_ids(filter)
     inds <- which(V(g)$name %in% filter)
     g <- igraph::delete.edges(g, which(E(g)$Confidence <= pp_confidence()))
 
     if (length(inds) > 0){
-        combs <- combinations(n = length(inds), r = 2, v = inds)
-        sub <- subgraph.edges(g, get_edge_ids(g, combs))
-        return(get.data.frame(sub, "edges"))
+        combs <- gtools::combinations(n = length(inds), r = 2, v = inds)
+        sub <- igraph::subgraph.edges(g, get_edge_ids(g, combs))
+        return(igraph::get.data.frame(sub, "edges"))
     }
 }
 
@@ -413,7 +409,10 @@ get_shortest_path_graph <- function(g, filter){
 #'    g
 #')
 #'@param g iGraph object obtained from to_graph() or get_graph()
-#'@examples
+#'@importFrom dplyr filter
+#'@importFrom plotly ggplotly
+#'@importFrom ggplot2 ggplot geom_point ylim scale_color_gradient
+#'theme_minimal scale_size_continuous
 get_2d_scatter <- function(g){
     df <- unlist(igraph::as_data_frame(g, what = "vertices")$go)
     to_pick <- names(df) %in% colnames(heatmap_df) 
@@ -432,6 +431,7 @@ get_2d_scatter <- function(g){
     }
     df <- data.frame(go = names, Pvalue = stats, Closeness = close, number = number, total = total) %>% dplyr::filter(number > 0)
     g <- ggplot(df, aes(x = Closeness, y = Pvalue, size = total, color = number, text = go)) + 
-        geom_point() + ylim(0, 0.05) + scale_color_gradient(low="red", high="yellow") + theme_minimal() + scale_size_continuous(range = c(5, 15))
-    return(ggplotly(g)) # , dynamicTicks = TRUE, scene = list(yaxis = list(range = c(0,0.05)))
+        geom_point() + ylim(0, 0.05) + scale_color_gradient(low="red", high="yellow") + 
+      theme_minimal() + scale_size_continuous(range = c(5, 15))
+    return(plotly::ggplotly(g))
 }

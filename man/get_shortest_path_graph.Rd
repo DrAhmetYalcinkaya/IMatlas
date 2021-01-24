@@ -10,7 +10,7 @@ get_shortest_path_graph(
 )
 }
 \arguments{
-\item{g}{iGraph object obtained from to_graph() or get_graph()}
+\item{g}{iGraph object obtained from to_graph(), get_graph()}
 
 \item{filter}{Names of protein/metabolites to search}
 }
