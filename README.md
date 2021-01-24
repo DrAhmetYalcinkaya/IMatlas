@@ -92,15 +92,28 @@ format:
 
     head(get_metabolite_go_pvalues(graph))
 
+<div class="kable-table">
+
+|     | Metabolite            | GO                                                     |    pvalue |
+|:----|:----------------------|:-------------------------------------------------------|----------:|
+| 1   | Nicotinamide ribotide | microglial cell activation                             | 0.0000000 |
+| 8   | Nicotinamide ribotide | myeloid leukocyte activation                           | 0.0958051 |
+| 12  | Nicotinamide ribotide | microglial cell activation involved in immune response | 0.1925197 |
+| 73  | Nicotinamide ribotide | macrophage activation                                  | 0.0000001 |
+| 76  | Nicotinamide ribotide | regulation of macrophage activation                    | 0.0008486 |
+| 77  | Nicotinamide ribotide | negative regulation of macrophage activation           | 0.5608146 |
+
+</div>
+
 When you only need the graph structure, use `simple = TRUE`. This is
 especially handy when constructing a lot of graphs. Note that only the
 bare minimum data is stored.
 
     get_graph(filter = "microglial cell activation", type = "Gene Ontology", simple = TRUE)
 
-    ## IGRAPH 068bf4e UN-- 15 19 -- 
+    ## IGRAPH 1312337 UN-- 15 19 -- 
     ## + attr: main (g/c), name (v/c)
-    ## + edges from 068bf4e (vertex names):
+    ## + edges from 1312337 (vertex names):
     ##  [1] P15260--P35225      P15260--O43914      P15260--P43490     
     ##  [4] P28799--P20160      P28799--P35225      P28799--P78423     
     ##  [7] P28799--O43914      P28799--P43490      P20160--HMDB0001394
