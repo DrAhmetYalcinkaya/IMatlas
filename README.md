@@ -39,27 +39,19 @@ contain at least the follwing fields:
 ## Preprocessing data
 
 Before using this package, you will need to obtain data using our Python
-scripts. These are located in the Python folder and only has be executed
-once. Preprocessing is done by running `Preprocessing.py`, which can be
-done by either of the following options:
+scripts. These are located in the Python folder and only have to be
+executed once. Preprocessing is done by running the following code:
 
--   Retain the files in the current folder structure and run the script
-    (default)
--   Change the variable `config_path` in `Preprocessing.py` to its
-    actual location
--   Run the script in a terminal with the first argument being the path
-    to `config.yaml` as follows:
-
-<!-- -->
-
-    python3 Preprocessing.py path_to_config.yaml
+    library(ImmunoMet)
+    path <- "config.yaml"
+    run_preprocessing(path)
 
 The scripts will download and extract all data to the given folder in
 the configuration file.
 
 ## Start the RShiny app
 
-    library("ImmunoMet")
+    library(ImmunoMet)
     load_data(config = "config.yaml")
     run_shiny()
 
@@ -67,7 +59,7 @@ the configuration file.
 
 Example, static graph
 
-    library("ImmunoMet")
+    library(ImmunoMet)
     load_data(config = "config.yaml")
     graph <- example_graph()
     plot(graph)
@@ -111,9 +103,9 @@ bare minimum data is stored.
 
     get_graph(filter = "microglial cell activation", type = "Gene Ontology", simple = TRUE)
 
-    ## IGRAPH 1312337 UN-- 15 19 -- 
+    ## IGRAPH 5a011f5 UN-- 15 19 -- 
     ## + attr: main (g/c), name (v/c)
-    ## + edges from 1312337 (vertex names):
+    ## + edges from 5a011f5 (vertex names):
     ##  [1] P15260--P35225      P15260--O43914      P15260--P43490     
     ##  [4] P28799--P20160      P28799--P35225      P28799--P78423     
     ##  [7] P28799--O43914      P28799--P43490      P20160--HMDB0001394

@@ -2,13 +2,13 @@ library(devtools)
 library(roxygen2)
 library(usethis)
 setwd("~/ImmunoMet/ImmunoMet")
-usethis::use_description()
+usethis::use_description(fields = list("biocViews" = ""))
 usethis::use_mit_license("Pascal Maas")
 packages <- c("shiny", "igraph", "colourpicker", "httr", "dplyr", 
               "shinythemes", "shinycssloaders", "waiter", "AnnotationDbi",
               "shinydashboard", "htmlwidgets", "heatmaply", "DT", "yaml",
               "RColorBrewer", "shinyalert", "plotly", "shinyjs", "data.table", 
-              "formattable", "gtools", "ggplot2", "GO.db", "plyr")
+              "formattable", "gtools", "ggplot2", "GO.db", "plyr", "reticulate")
 invisible(sapply(packages, usethis::use_package))
 
 
@@ -24,9 +24,10 @@ devtools::install_github(repo = "vanhasseltlab/ImmuneMetAtlas",
 
 
 library(ImmunoMet)
-load_data("C:/Users/Pascal/Documents/ImmuneMetAtlas/App/config.yaml")
+path <- "C:/Users/Pascal/Documents/ImmuneMetAtlas/App/config.yaml"
+run_preprocessing(path)
+load_data(path)
 run_shiny()
 plot(example_graph())
 to_plotly(example_graph())
-
 

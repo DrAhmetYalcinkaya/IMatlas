@@ -133,3 +133,34 @@ get_metabolite_go_pvalues <- function(graph){
     }
     return(NULL)
 }
+
+
+#'@title Run Preprocessing
+#'@importFrom reticulate py_available py_config
+run_preprocessing <- function(config_path){
+  cat("This function will run the processing Python scripts. This may take a while (~15 min)")
+  continue <- readline(prompt = "Do you want to continue? (y/n) ")
+  if (tolower(continue) == "y"){
+    tryCatch({
+      if (reticulate::py_available(T)){
+        cat("Executing Preprocessing scripts, please wait.\n")
+        file <- system.file("Python", "Preprocessing.py", package = "ImmunoMet", mustWork = T)
+        python <- reticulate::py_config()$python
+        command <- sprintf("%s %s %s", python, file, config_path)
+        system(command)
+        cat("Preprocessing succesful\n")
+      } else {
+        cat(paste("Preprocessing failed. No Python3 installation was found.",
+                  "Ensure Python3 is installed and try again.\n"))
+      }
+      
+    }, error = function(e){
+      cat(e)
+    })
+  } else {
+    cat("Preprocessing cancelled\n")
+  }
+}
+
+
+

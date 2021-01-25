@@ -3,6 +3,7 @@ import pip
 import importlib
 import os
 import sys
+import yaml
 from pathlib import Path
 from Preprocessing_hmdb import HMDB
 from Preprocessing_go import GODB
@@ -49,13 +50,11 @@ def main(config_path):
     go_db.extract_gos(df) 
     log.close()
 
-
 if __name__ == "__main__":
     config_path = "../config.yaml"
     if len(sys.argv) > 1:
-        config_path = sys.argv[1]
-
-    install_packages("yaml")
+        config_path = sys.argv[1].lstrip("'").rstrip("'").lstrip('"').rstrip('"')
+        
     install_packages("numpy")
     install_packages("pandas")
     main(config_path)
