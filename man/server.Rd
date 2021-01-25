@@ -7,7 +7,11 @@
 server(input, output, session)
 }
 \arguments{
-\item{input}{}
+\item{input}{Reactive variable containing all inputs from the user}
+
+\item{output}{Reactive variable containing all outputs to the server}
+
+\item{session}{Reactive variable containing info about the specific session of the user}
 }
 \description{
 Shiny server

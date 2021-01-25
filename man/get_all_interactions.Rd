@@ -6,7 +6,7 @@
 \usage{
 get_all_interactions(
    ids,
-   mode = "both"
+   mode = "both",
    conf = 0
 )
 }

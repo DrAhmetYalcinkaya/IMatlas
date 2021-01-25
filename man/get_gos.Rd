@@ -10,12 +10,10 @@ get_gos(
 }
 \arguments{
 \item{options}{YAML list containing field-value pairs.
-See the ReadMe for mandatory fields. Returns vector of GO IDs.}
+See the ReadMe for mandatory fields. Returns vector of GO IDs.
+options = list(GO_ID = "GO:0002376")
+go_vec <- get_gos(options)}
 }
 \description{
 Retrieves GO descendants of the given GO identifier.
-}
-\examples{
-options = list(GO_ID = "GO:0002376")
-go_vec <- get_gos(options)
 }

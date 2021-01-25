@@ -99,7 +99,7 @@ plot(graph)
 
 
 Obtain p-values of metabolite - GO associations in a long dataframe format:
-``` {r eval=FALSE}
+``` {r}
 head(get_metabolite_go_pvalues(graph))
 ```
 

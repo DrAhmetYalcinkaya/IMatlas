@@ -11,6 +11,8 @@ get_edge_ids(
 }
 \arguments{
 \item{g}{iGraph object obtained from to_graph() or get_graph()}
+
+\item{combinations}{Dataframe of edges}
 }
 \description{
 Get edge ids between nodes of interest using shortest paths.

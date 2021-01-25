@@ -18,6 +18,3 @@ load_data(
 Variables and files are loaded to the global environment to
 be used by other functions inside this package.
 }
-\examples{
-load_data()
-}
