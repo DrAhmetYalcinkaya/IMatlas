@@ -29,6 +29,7 @@ header_row <- function(title, subtitle){
   return(fluidRow(column(1), column(8, div(h2(strong(title)), h5(subtitle), hr()))))
 }
 
+#' @title Make Sidebar UI
 side_bar_menu <- function(){
     sidebarMenu(id = "tabs",
         menuItem("Dashboard", tabName = "home", icon = icon("home")),

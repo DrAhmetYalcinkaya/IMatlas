@@ -47,7 +47,6 @@ add_metadata_to_graph <- function(g){
 #')
 #'@param g iGraph object obtained from to_graph() or get_graph()
 #'@param mets iGraph identifiers of metabolites
-#'@examples
 add_vertice_colors <- function(g, mets){
     if (!is_reactive){
         size <- reactiveVal(12)
@@ -78,7 +77,6 @@ add_vertice_colors <- function(g, mets){
 #')
 #'@param g iGraph object obtained from to_graph() or get_graph()
 #'@param mets iGraph identifiers of metabolites
-#'@examples
 add_class_metadata <- function(g, mets){
     V(g)$class <- NA
     V(g)$class_alpha <- 0
@@ -98,7 +96,6 @@ add_class_metadata <- function(g, mets){
 #')
 #'@param g iGraph object obtained from to_graph() or get_graph()
 #'@param mets iGraph identifiers of metabolites
-#'@examples
 #'@importFrom RColorBrewer brewer.pal
 add_superclass_metadata <- function(g, mets){
     class_colors <- RColorBrewer::brewer.pal(n = length(mets), name = "Dark2")
@@ -226,7 +223,6 @@ harmonized_closeness <- function(g){
 #'@param id String Gene Ontology identifier 
 #'@param all_go_in_network Table of Gene Ontology counts in the current network
 #'@param all_go Table of Gene Ontology counts in the database
-#'@examples
 #'@importFrom stats fisher.test
 fishers_test <- function(id, all_go_in_network, all_go){
     a <- all_go_in_network[id]
@@ -241,7 +237,6 @@ fishers_test <- function(id, all_go_in_network, all_go){
 #'    g
 #')
 #'@param g iGraph object obtained from to_graph() or get_graph()
-#'@examples
 #'@importFrom stats p.adjust
 calculate_pvalues <- function(g){
   to_search <- unlist(V(g)$go)
@@ -376,7 +371,7 @@ get_pp_confidences <- function(g){
 #'    combinations
 #')
 #'@param g iGraph object obtained from to_graph() or get_graph()
-#'@param combinations
+#'@param combinations Dataframe of edges
 get_edge_ids <- function(g, combinations){
     unique(unlist(apply(combinations, 1, function(x){
         unlist(igraph::shortest_paths(g, V(g)[x[1]], V(g)[x[2]], 

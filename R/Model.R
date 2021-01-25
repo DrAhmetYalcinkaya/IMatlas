@@ -5,7 +5,6 @@
 #')
 #'@param options YAML list containing field-value pairs. 
 #'See the ReadMe for mandatory fields. Returns vector of GO IDs.
-#'@examples
 #'options = list(GO_ID = "GO:0002376")
 #'go_vec <- get_gos(options)
 #'@importFrom httr GET content
@@ -196,7 +195,7 @@ filter_on_confidence <- function(df, conf=0){
 #'@description Get all type of interactions between given identifiers. 
 #'@usage get_all_interactions(
 #'    ids,
-#'    mode = "both"
+#'    mode = "both",
 #'    conf = 0
 #')
 #'@param ids Vector of identifiers that may contain metabolites and/or proteins
@@ -381,7 +380,6 @@ network_from_gos <- function(gos, mode = "names"){
 #'@param df Dataframe of current interactions
 #'@param n Integer of number of neighbours
 #'@param max Integer of maximum number of edges per node.
-#'@examples
 get_n_neighbours <- function(df, n, max){
     if (n > 0){
         for (i in 1:n){
@@ -399,7 +397,6 @@ get_n_neighbours <- function(df, n, max){
 
 #'@title Get names of all available proteins / metabolites
 #'@usage get_sorted_interaction_names()
-#'@examples
 get_sorted_interaction_names <- function(){
     return(sort(convert_ids_to_names(unique(
         c(t(interactions[,c("From", "To")]))))))
@@ -410,7 +407,6 @@ get_sorted_interaction_names <- function(){
 #'    gos
 #')
 #'@param gos Vector of Gene Ontology names
-#'@examples
 get_go_ids_by_go <- function(gos){
   go_name_df <- change_index(go_name_df, "Name")
   return(as.vector(go_name_df[gos,]$GOID))
@@ -425,7 +421,6 @@ get_go_ids_by_go <- function(gos){
 #'@param vec Vector of numerical values
 #'@param min Lower boundary after normalization
 #'@param max Upper boundary after normalization
-#'@examples
 normalized <- function(vec, min=0, max=1){
   (max - min) * ((vec - min(vec)) / max(vec) - min(vec)) + min
 }

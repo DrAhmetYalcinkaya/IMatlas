@@ -7,8 +7,6 @@
 #')
 #'@param config String path to a YAML configuration file
 #'@param neighbours Integer value representing the number of 'steps' allowed for protein-protein interactions
-#'@examples
-#'load_data()
 #'@importFrom yaml read_yaml
 #'@importFrom GO.db GOBPOFFSPRING 
 #'@importFrom AnnotationDbi Term

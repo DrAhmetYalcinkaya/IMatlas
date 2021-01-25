@@ -47,7 +47,7 @@ load_interaction_data <- function(options, prot_file="Protein-protein.csv", full
       setwd(options$folder)
       if (full_load){
           ## Non-Indexed files
-          protein_go_df <<- read_file("Protein_gos.csv") # Protein_gos
+          protein_go_df <<- read_file("Protein_gos.csv")
           protein_go_df <<- unique(protein_go_df)
           prot_names <<- read_file("Protein_names.csv")
           mm_interactions <<- read_file("Metabolite-metabolite.csv")
@@ -150,10 +150,10 @@ get_node_table <- function(g){
 #'@importFrom plotly ggplotly
 #'@importFrom ggplot2 ggplot geom_bar theme_minimal theme theme_void
 get_go_barplot <- function(g){
-    d <- unlist(igraph::as_data_frame(g, what = "vertices")$go_statistics)
-    df <- unique(data.frame(go = names(d), go_statistics = d))
+    d <- unlist(igraph::as_data_frame(g, what = "vertices")$go)
+    df <- unique(data.frame(go = names(d), pvalues = d))
     if (nrow(df) > 0){
-        return(plotly::ggplotly(ggplot2::ggplot(df, aes(x = go, y = go_statistics)) + 
+        return(plotly::ggplotly(ggplot2::ggplot(df, aes(x = go, y = pvalues)) + 
                             geom_bar(stat = "identity") + theme_minimal() + 
                             theme(axis.text.x = element_text(angle = 45)))
         )
