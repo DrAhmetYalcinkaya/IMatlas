@@ -33,6 +33,23 @@ observe_inputs <- function(){
     })
 }
 
+generate_go_metabolite_df <- function(id){
+  offspring <- as.list(GO.db::GOBPOFFSPRING)
+  ids <- c(offspring[[id]], id)
+  return(do.call(rbind, lapply(ids, function(x){
+    g <- get_graph(get_go_names(x), simple = T)
+    if (typeof(g) == 'list'){
+      g <- add_node_types(g)
+      V(g)$centrality <- round(harmonized_closeness(g), 3)
+      df <- get.data.frame(g, "vertices") %>%
+        dplyr::filter(type == "Metabolite") %>%
+        dplyr::select("centrality")
+      if (nrow(df) > 0) data.frame(GO = x, Metabolite = rownames(df), Centrality = df$centrality)
+    }
+    
+  })))
+}
+
 #'@title Load interaction data
 #'@usage load_interaction_data(
 #'    options,

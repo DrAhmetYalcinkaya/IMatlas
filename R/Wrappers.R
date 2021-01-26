@@ -10,7 +10,7 @@
 #'@importFrom yaml read_yaml
 #'@importFrom GO.db GOBPOFFSPRING 
 #'@importFrom AnnotationDbi Term
-load_data <- function(config, neighbours=0){
+load_data <- function(config, neighbours=0, full=T, print_summary=T){
     env <- parent.frame()
     options <- yaml::read_yaml(config)
     prot_files <- list("Direct" = "Protein-protein.csv", 
@@ -31,6 +31,15 @@ load_data <- function(config, neighbours=0){
     env$go_name_df <- go_name_df[which(go_name_df$GOID %in% protein_go_df$GOID),]
     env$options <- options
     env$is_reactive = F
+    if (full) env$go_metabolite <- read_file("metabolite_go.csv", "")
+    if (print_summary) print_data_summary(config)
+}
+
+print_data_summary <- function(config){
+  message("Summary of loaded data:")
+  message(sprintf("Number of metabolite-protein interactions: %s", nrow(pm_interactions)))
+  message(sprintf("Number of metabolite-metabolite interactions: %s", nrow(mm_interactions)))
+  message(sprintf("Number of protein-protein interactions: %s", nrow(pp_interactions)))
 }
 
 #'@title Get GO terms
@@ -67,8 +76,9 @@ get_go_terms <- function(){
 #'g <- get_graph("L-Asparagine", type = "Metabolites/Proteins")
 #'@importFrom igraph simplify graph_from_data_frame
 get_graph <- function(filter, neighbours = 0, max_neighbours=Inf, simple = F,
-                      type = "Gene Ontology", search_mode = "Interacts"){
+                      type = "Gene Ontology", search_mode = "Interacts", print_summary = T){
     df <- data_filter(filter, neighbours, max_neighbours, type, search_mode)
+    g <- NA
     if (nrow(df) > 0){
         if (simple){
             g <- igraph::simplify(igraph::graph_from_data_frame(df, directed = F))
@@ -76,9 +86,23 @@ get_graph <- function(filter, neighbours = 0, max_neighbours=Inf, simple = F,
             g <- suppressWarnings(to_graph(df))
         }
         g$main <- filter
-        return(g)
+        if (print_summary && !simple) print_graph(g)
     } 
-    return(NA)
+    return(g)
+}
+
+print_graph <- function(g){
+  df <- igraph::get.data.frame(g, "vertices")
+  mets <- df %>%
+    dplyr::filter(type == "Metabolite") %>% nrow
+  
+  prots <- df %>%
+    dplyr::filter(type != "Metabolite") %>% nrow
+  
+  message("Summary of constructed graph:")
+  message(sprintf("Search filter: %s", g$main))
+  message(sprintf("Size of graph: %s nodes & %s edges containing %s metabolites & %s proteins", 
+                  length(V(g)), length(E(g)), mets, prots))
 }
 
 #'@title Get metadata of metabolites
@@ -113,7 +137,8 @@ get_metabolite_metadata <- function(graph, metadata){
 #'graph <- example_graph()
 #'plot(graph)
 example_graph <- function(){
-    get_graph("microglial cell activation", type = "Gene Ontology", neighbours = 0, max_neighbours = Inf, simple = F)
+    get_graph("microglial cell activation", type = "Gene Ontology", 
+              neighbours = 0, max_neighbours = Inf, simple = F, print_summary = T)
 }
 
 
@@ -138,29 +163,28 @@ get_metabolite_go_pvalues <- function(graph){
 #'@title Run Preprocessing
 #'@importFrom reticulate py_available py_config
 run_preprocessing <- function(config_path){
-  cat("This function will run the processing Python scripts. This may take a while (~15 min)")
+  message("This function will run the processing Python scripts. This may take a while (15-30 min)")
   continue <- readline(prompt = "Do you want to continue? (y/n) ")
   if (tolower(continue) == "y"){
-    tryCatch({
       if (reticulate::py_available(T)){
-        cat("Executing Preprocessing scripts, please wait.\n")
+        message("Executing Preprocessing scripts, please wait.")
         file <- system.file("Python", "Preprocessing.py", package = "ImmunoMet", mustWork = T)
         python <- reticulate::py_config()$python
         command <- sprintf("%s %s %s", python, file, config_path)
         system(command)
-        cat("Preprocessing succesful\n")
+        message("Testing if new data can be loaded")
+        load_data(config_path, full=F)
+        message("Performing final analysis")
+        options <- yaml::read_yaml(config_path)
+        df <- generate_go_metabolite_df(options$GO_ID)
+        write.csv(df, sprintf("%s/go_metabolite.csv", options$folder), row.names = F)
+        env$go_metabolite <- read_file(sprintf("%s/go_metabolite.csv", options$folder))
+        message("Preprocessing succesful")
       } else {
-        cat(paste("Preprocessing failed. No Python3 installation was found.",
-                  "Ensure Python3 is installed and try again.\n"))
+        stop(paste("Preprocessing failed. No Python3 installation was found.",
+                  "Ensure Python3 is installed and try again."))
       }
-      
-    }, error = function(e){
-      cat(e)
-    })
   } else {
-    cat("Preprocessing cancelled\n")
+    message("Preprocessing cancelled")
   }
 }
-
-
-

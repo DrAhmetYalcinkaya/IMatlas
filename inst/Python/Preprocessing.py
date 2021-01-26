@@ -10,13 +10,6 @@ from Preprocessing_go import GODB
 from Preprocessing_uniprot import Uniprot
 from Preprocessing_rhea import RheaDB
 
-def install_packages(package):
-    try:
-        importlib.import_module(package)
-    except ImportError:
-        pip.main(['install', package])
-
-
 def main(config_path):
     """ 
     This function describes the preprocessing and includes data from
@@ -31,6 +24,7 @@ def main(config_path):
     with open(config_path) as file: 
         options = yaml.load(file, Loader=yaml.FullLoader)
         Path(options["folder"]).mkdir(parents=True, exist_ok=True)
+    print("Opened Config file.")
 
     log = open(f"{options['folder']}/Log_preprocessing.txt", "w", buffering=1)
 
@@ -54,7 +48,4 @@ if __name__ == "__main__":
     config_path = "../config.yaml"
     if len(sys.argv) > 1:
         config_path = sys.argv[1].lstrip("'").rstrip("'").lstrip('"').rstrip('"')
-        
-    install_packages("numpy")
-    install_packages("pandas")
     main(config_path)

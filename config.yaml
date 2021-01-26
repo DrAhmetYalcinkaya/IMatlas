@@ -4,12 +4,7 @@
 ## Do not alter the preprocessing script unless adaptations are necessary
 
 # Folder for data files:
-folder: C:/Users/pascal/Documents/ImmuneMetAtlas/Data/
-
-# RShiny folder
-shiny_folder: C:/Users/pascal/Documents/ImmuneMetAtlas/App/
-
-# Parse Options
+folder: 
 
 # Gene Ontology identifier to use for filter (GO:0045087 = Innate Immune response)
 GO_ID: GO:0002376

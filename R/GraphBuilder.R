@@ -24,6 +24,15 @@ to_graph <- function(df){
     return(g)
 }
 
+add_node_types <- function(g){
+  V(g)$id <- igraph::V(g)$name
+  V(g)[get_metabolite_vertice_ids(g)]$type <- "Metabolite"
+  V(g)[get_protein_vertice_ids(g)]$type <- "Protein"
+  V(g)[get_enzyme_vertice_ids(g)]$type <- "Enzyme"
+  V(g)[get_transporter_vertice_ids(g)]$type <- "Transporter"
+  return(g)
+}
+
 #'@title Adding metadata to igraph object
 #'@usage add_metadata_to_graph(
 #'    g

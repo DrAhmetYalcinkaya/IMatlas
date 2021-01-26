@@ -44,6 +44,7 @@ class HMDB:
         """
         This method creates a generator by yielding a ElementTree object for each chunk
         """
+        print("Start parsing")
         with self.source.open("hmdb_metabolites.xml", "r") as f:
             next(f)
             next(f)
@@ -83,7 +84,7 @@ class HMDB:
         """
         
         """
-        print("Start HMDB XML parsing")
+        print("Start downloading HMDB XML")
         url = 'https://hmdb.ca/system/downloads/current/hmdb_metabolites.zip'
         r = requests.get(url, stream=True)
         z = zipfile.ZipFile(io.BytesIO(r.content))
