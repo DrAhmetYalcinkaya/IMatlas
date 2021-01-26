@@ -3,25 +3,52 @@
 #'    df
 #')
 #'@param df Dataframe of interactions between nodes
-to_graph <- function(df){
+to_graph <- function(df, type){
     g <- igraph::simplify(igraph::graph_from_data_frame(df, directed = F))
+    V(g)$id <- igraph::V(g)$name
+    V(g)$name <- make.unique(convert_ids_to_names(V(g)$id))
+    
+    V(g)$go <- get_all_protein_gos(V(g)$id)
+    V(g)$centrality <- round(harmonized_closeness(g), 3)
+    V(g)$cluster <- igraph::components(g)$membership
+    g <- get_gos_per_cluster(g, calculate_pvalues(g))
+    if (type == "GO Simple"){
+      g <- construct_metabolite_go_network(g)
+    }
+
+    g <- add_metadata_to_graph(g)
+    g <- add_vertice_colors(g)
+    g <- add_class_metadata(g)
+    g <- add_superclass_metadata(g)
     layout <- as.data.frame(igraph::layout.fruchterman.reingold(g))
     V(g)$x <- layout[,1]
     V(g)$y <- layout[,2]
-    
-    V(g)$id <- igraph::V(g)$name
-    V(g)$name <- make.unique(convert_ids_to_names(V(g)$id))
-    V(g)$centrality <- round(harmonized_closeness(g), 3)
-    V(g)$cluster <- igraph::components(g)$membership
-    V(g)$go <- get_all_protein_gos(V(g)$id)
-    pvalues <- calculate_pvalues(g)
-    mets <- get_metabolite_vertice_ids(g)
-    g <- get_gos_per_cluster(g, pvalues)
-    g <- add_metadata_to_graph(g)
-    g <- add_vertice_colors(g, mets)
-    g <- add_class_metadata(g, mets)
-    g <- add_superclass_metadata(g, mets)
     return(g)
+}
+
+#'@title Construct a network of metabolites and GOs
+#'@usage construct_metabolite_go_network(
+#'    g,
+#'    mets
+#')
+#'@param g iGraph object obtained from to_graph() or get_graph()
+#'@param mets iGraph identifiers of metabolites
+construct_metabolite_go_network <- function(g){
+  mets <- get_metabolite_vertice_ids(g)
+  go_names <- unique(names(unlist(V(g)$go)))
+  df <- do.call(rbind, lapply(mets, function(n){
+    data.frame("From" = V(g)[n]$id, "To" = get_go_ids_by_go(go_names))
+  }))
+  rownames(df) <- 1:nrow(df)
+  g <- igraph::simplify(igraph::graph_from_data_frame(df, directed = F))
+  V(g)$id <- V(g)$name
+  mets <- get_metabolite_vertice_ids(g)
+  gos <- get_protein_vertice_ids(g)
+  
+  V(g)[mets]$name <-  convert_ids_to_names(V(g)[mets]$id)
+  V(g)[gos]$name <- go_names
+  V(g)$centrality <- 1
+  return(g)
 }
 
 add_node_types <- function(g){
@@ -56,7 +83,8 @@ add_metadata_to_graph <- function(g){
 #')
 #'@param g iGraph object obtained from to_graph() or get_graph()
 #'@param mets iGraph identifiers of metabolites
-add_vertice_colors <- function(g, mets){
+add_vertice_colors <- function(g){
+  mets <- get_metabolite_vertice_ids(g)
     if (!is_reactive){
         size <- reactiveVal(12)
         col_met <- reactiveVal("orange")
@@ -86,12 +114,14 @@ add_vertice_colors <- function(g, mets){
 #')
 #'@param g iGraph object obtained from to_graph() or get_graph()
 #'@param mets iGraph identifiers of metabolites
-add_class_metadata <- function(g, mets){
+#'@importFrom viridis viridis
+add_class_metadata <- function(g){
+    mets <- get_metabolite_vertice_ids(g)
     V(g)$class <- NA
     V(g)$class_alpha <- 0
     V(g)$class_colors <- NA
     
-    class_colors <- brewer.pal(n = length(mets), name = "Dark2")
+    class_colors <- viridis::viridis(length(mets))
     V(g)[mets]$class <- get_class(V(g)[mets]$id)
     V(g)[mets]$class_colors <- class_colors[as.factor(V(g)[mets]$class)]
     V(g)[mets]$class_alpha <- 1
@@ -105,9 +135,10 @@ add_class_metadata <- function(g, mets){
 #')
 #'@param g iGraph object obtained from to_graph() or get_graph()
 #'@param mets iGraph identifiers of metabolites
-#'@importFrom RColorBrewer brewer.pal
-add_superclass_metadata <- function(g, mets){
-    class_colors <- RColorBrewer::brewer.pal(n = length(mets), name = "Dark2")
+#'@importFrom viridis viridis
+add_superclass_metadata <- function(g){
+    mets <- get_metabolite_vertice_ids(g)
+    class_colors <- viridis::viridis(length(mets))
     
     V(g)$superclass <- NA
     V(g)$superclass_alpha <- 0
@@ -254,8 +285,7 @@ calculate_pvalues <- function(g){
   vec <- p.adjust(sapply(names(ids), simplify = F, USE.NAMES = T, function(id){
     return(fishers_test(id, ids, all_go))
   }))
-  #vec <- vec[vec < 0.05]
-  #vec <- vec[vec < 1]
+  vec <- vec[vec < 1]
   names(vec) <- get_go_names(names(vec))
   return(vec)
 }
@@ -278,25 +308,7 @@ get_gos_per_cluster <- function(g, pvalues){
   return(g)
 }
 
-#'@title Construct a network of metabolites and GOs
-#'@usage construct_metabolite_go_network(
-#'    g,
-#'    mets
-#')
-#'@param g iGraph object obtained from to_graph() or get_graph()
-#'@param mets iGraph identifiers of metabolites
-construct_metabolite_go_network <- function(g, mets){
-  mets <- get_metabolite_vertice_ids(g)
-  df <- do.call(rbind, lapply(V(g)[mets], function(n){
-    data.frame("From" = V(g)[n]$id, "To" = unlist(V(g)[n]$go))
-  }))
-  rownames(df) <- 1:nrow(df)
-  cen <- V(g)[mets]$centrality
-  g <- igraph::simplify(igraph::graph_from_data_frame(df, directed = F))
-  V(g)$centrality <- 0
-  V(g)[mets]$centrality <- cen
-  return(g)
-}
+
 
 #'@title Get indexes of cofactor edges by identifier
 #'@usage get_cofactor_edge_ids(
@@ -331,6 +343,7 @@ get_enzyme_vertice_ids <- function(g){
 get_protein_vertice_ids <- function(g){
   return(which(!startsWith(V(g)$id, "HMDB")))
 }
+
 
 #'@title Get indexes of metabolites vertices by identifier
 #'@usage get_metabolite_vertice_ids(

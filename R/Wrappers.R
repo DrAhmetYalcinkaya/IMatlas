@@ -31,12 +31,11 @@ load_data <- function(config, neighbours=0, full=T, print_summary=T){
     env$go_name_df <- go_name_df[which(go_name_df$GOID %in% protein_go_df$GOID),]
     env$options <- options
     env$is_reactive = F
-    if (full) env$go_metabolite <- read_file("metabolite_go.csv", "")
+    if (full) env$go_metabolite <- read_file("go_metabolite.csv")
     if (print_summary) print_data_summary(config)
 }
 
 print_data_summary <- function(config){
-  message("Summary of loaded data:")
   message(sprintf("Number of metabolite-protein interactions: %s", nrow(pm_interactions)))
   message(sprintf("Number of metabolite-metabolite interactions: %s", nrow(mm_interactions)))
   message(sprintf("Number of protein-protein interactions: %s", nrow(pp_interactions)))
@@ -75,23 +74,23 @@ get_go_terms <- function(){
 #'# Construct a graph using Metabolites and/or Proteins
 #'g <- get_graph("L-Asparagine", type = "Metabolites/Proteins")
 #'@importFrom igraph simplify graph_from_data_frame
-get_graph <- function(filter, neighbours = 0, max_neighbours=Inf, simple = F,
+get_graph <- function(filter, neighbours = 0, max_neighbours=Inf, simple = F, omit_lipids = F,
                       type = "Gene Ontology", search_mode = "Interacts", print_summary = T){
-    df <- data_filter(filter, neighbours, max_neighbours, type, search_mode)
+    df <- data_filter(filter, neighbours, max_neighbours, type, search_mode, omit_lipids)
     g <- NA
     if (nrow(df) > 0){
         if (simple){
             g <- igraph::simplify(igraph::graph_from_data_frame(df, directed = F))
         } else {
-            g <- suppressWarnings(to_graph(df))
+            g <- to_graph(df, type)
         }
         g$main <- filter
-        if (print_summary && !simple) print_graph(g)
+        if (print_summary && !simple) print_graph(g, type)
     } 
     return(g)
 }
 
-print_graph <- function(g){
+print_graph <- function(g, type){
   df <- igraph::get.data.frame(g, "vertices")
   mets <- df %>%
     dplyr::filter(type == "Metabolite") %>% nrow
@@ -99,10 +98,11 @@ print_graph <- function(g){
   prots <- df %>%
     dplyr::filter(type != "Metabolite") %>% nrow
   
-  message("Summary of constructed graph:")
+  name <- "protein"
+  if (type == "GO Simple") name <- "GO"
   message(sprintf("Search filter: %s", g$main))
-  message(sprintf("Size of graph: %s nodes & %s edges containing %s metabolites & %s proteins", 
-                  length(V(g)), length(E(g)), mets, prots))
+  message(sprintf("Found %d nodes & %d edges representing %d metabolites & %d %s", 
+                  length(V(g)), length(E(g)), mets, prots, name))
 }
 
 #'@title Get metadata of metabolites
@@ -121,14 +121,8 @@ print_graph <- function(g){
 get_metabolite_metadata <- function(graph, metadata){
     df <- igraph::get.data.frame(graph, "vertices") %>%
         dplyr::filter(type == "Metabolite") %>%
-        dplyr::select(name, all_of(metadata))
-  
-    if (typeof(df[,metadata]) == "list"){
-        l <- df[,metadata]
-        names(l) <- df$name
-        return(l)
-    }
-    return(df %>% dplyr::select(all_of(metadata)))
+        dplyr::select(all_of(metadata))
+    return(df)
 }
 
 #'@title Produce the example graph
@@ -189,4 +183,5 @@ run_preprocessing <- function(config_path){
     message("Preprocessing cancelled")
   }
 }
+
 

@@ -249,7 +249,8 @@ get_enzymes <- function(ids){
 #')
 #'@param ids Vector of metabolite identifiers
 get_class <- function(ids){
-  return(met_class[which(met_class$ID %in% ids),]$class)
+  met_class <- change_index(met_class, "ID")
+  return(met_class[ids,]$class)
 }
 
 #'@title Get superclasses of metabolites
@@ -258,7 +259,8 @@ get_class <- function(ids){
 #')
 #'@param ids Vector of metabolite identifiers
 get_superclass <- function(ids){
-  return(met_superclass[which(met_superclass$ID %in% ids),]$super_class)
+  met_superclass <- change_index(met_superclass, "ID")
+  return(met_superclass[ids,]$super_class)
 }
 
 #'@title Get the cellular location of metabolites

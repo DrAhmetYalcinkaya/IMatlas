@@ -227,7 +227,8 @@ get_heatmap_plot <- function(g){
 #'@param type String containing the type of search.
 #'@param search_mode String of either 'Interacts' or 'Between'. Interacts finds the first neighbour
 #'of the given search, while Between only returns interactions between the proteins / metabolites given.
-data_filter <- function(filter, neighbours=0, max_neighbours=Inf, type = "Gene Ontology", search_mode = "Interacts"){
+data_filter <- function(filter, neighbours=0, max_neighbours=Inf, type = "Gene Ontology", 
+                        search_mode = "Interacts", omit_lipids=F){
     if (search_mode == "Shortest Path"){
         data.selected <- get_shortest_path_graph(graph_from_data_frame(interactions), filter)
     } else if (type == "Gene Ontology"){
@@ -243,6 +244,18 @@ data_filter <- function(filter, neighbours=0, max_neighbours=Inf, type = "Gene O
         )
         data.selected <- get_all_interactions(ids, mode = search)
     }
+    
     data.selected <- get_n_neighbours(data.selected, n=neighbours, max=max_neighbours)
+    data.selected <- lipid_filter(data.selected, omit_lipids)
     return(data.selected)
+}
+
+lipid_filter <- function(data.selected, omit_lipids){
+  if (omit_lipids){
+    from <- get_superclass(data.selected[,1])
+    to <- get_superclass(data.selected[,2])
+    indexes <- which(dplyr::coalesce(from, to) == "Lipids and lipid-like molecules")
+    data.selected <- data.selected[-indexes,]
+  }
+  return(data.selected)
 }
