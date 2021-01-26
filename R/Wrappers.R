@@ -178,6 +178,7 @@ run_preprocessing <- function(config_path){
         options <- yaml::read_yaml(config_path)
         df <- generate_go_metabolite_df(options$GO_ID)
         write.csv(df, sprintf("%s/go_metabolite.csv", options$folder), row.names = F)
+        env <- parent.frame()
         env$go_metabolite <- read_file(sprintf("%s/go_metabolite.csv", options$folder))
         message("Preprocessing succesful")
       } else {
@@ -188,3 +189,4 @@ run_preprocessing <- function(config_path){
     message("Preprocessing cancelled")
   }
 }
+
