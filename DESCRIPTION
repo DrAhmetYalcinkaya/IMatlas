@@ -39,4 +39,5 @@ Imports:
     ggplot2,
     GO.db,
     plyr,
-    reticulate
+    reticulate,
+    viridis

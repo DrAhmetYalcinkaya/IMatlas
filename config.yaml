@@ -6,5 +6,5 @@
 # Folder for data files:
 folder: 
 
-# Gene Ontology identifier to use for filter (GO:0045087 = Innate Immune response)
-GO_ID: GO:0002376
+# Gene Ontology identifier to use for filter (GO:0002376 = Immune system process)
+GO_ID: 

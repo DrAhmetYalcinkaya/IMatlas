@@ -11,27 +11,23 @@
 #'@importFrom GO.db GOBPOFFSPRING 
 #'@importFrom AnnotationDbi Term
 load_data <- function(config, neighbours=0, full=T, print_summary=T){
-    env <- parent.frame()
-    options <- yaml::read_yaml(config)
+    env <<- sys.frame()
+    env$options <- yaml::read_yaml(config)
     prot_files <- list("Direct" = "Protein-protein.csv", 
                        "First Indirect" = "Protein-protein_1.csv", 
                        "Second Indirect" = "Protein-protein_2.csv")
-    env <- parent.frame()
-    env$go_name_df <- env$meta_names <- env$prot_names <- env$enzyme_df <- env$cofactor_df <- env$graph <- NULL
-    env$met_class <- env$met_superclass <- env$met_biospecimen <- env$met_cellular <- env$met_tissue <- env$prot_trans <- env$met_path <- NULL
-    env$protein_go_df <- env$pp_interactions <- env$mm_interactions <- env$pm_interactions <- env$interactions <- NULL
-    env$pp_confidence <- reactiveVal(0)
     
-    load_interaction_data(options, prot_file = prot_files[[names(prot_files)[neighbours + 1]]])
-    offspring <<- as.list(GO.db::GOBPOFFSPRING)
-    go_name_df <- data.frame(GOID = as.vector(names(offspring)), 
-                             Name = as.vector(AnnotationDbi::Term(names(offspring))))
+    prot_file <- prot_files[[names(prot_files)[neighbours + 1]]]
+    env$pp_confidence <- reactiveVal(0)
+    load_interaction_data(env$options, prot_file, full)
+    
+    env$offspring <- as.list(GO.db::GOBPOFFSPRING)
+    go_name_df <- data.frame(GOID = as.vector(names(env$offspring)), 
+                             Name = as.vector(AnnotationDbi::Term(names(env$offspring))))
     rownames(go_name_df) <- go_name_df$GOID
-    go_name_df <- go_name_df[c(offspring[[options$GO_ID]], options$GO_ID),]
+    go_name_df <- go_name_df[c(env$offspring[[env$options$GO_ID]], env$options$GO_ID),]
     env$go_name_df <- go_name_df[which(go_name_df$GOID %in% protein_go_df$GOID),]
-    env$options <- options
     env$is_reactive = F
-    if (full) env$go_metabolite <- read_file("go_metabolite.csv")
     if (print_summary) print_data_summary(config)
 }
 
@@ -76,6 +72,8 @@ get_go_terms <- function(){
 #'@importFrom igraph simplify graph_from_data_frame
 get_graph <- function(filter, neighbours = 0, max_neighbours=Inf, simple = F, omit_lipids = F,
                       type = "Gene Ontology", search_mode = "Interacts", print_summary = T){
+  env <- sys.frame()
+  if (is.null(env$interactions)) stop("No data loaded. Run 'load_data(config_path)' first.", call. = F)
     df <- data_filter(filter, neighbours, max_neighbours, type, search_mode, omit_lipids)
     g <- NA
     if (nrow(df) > 0){
@@ -184,4 +182,17 @@ run_preprocessing <- function(config_path){
   }
 }
 
-
+run_textmining <- function(config_path){
+  message("This function will run the text mining Python script. This script takes a while to process due to many API calls.")
+  continue <- readline(prompt = "Do you want to continue? (y/n) ")
+  if (tolower(continue) == "y"){
+    if (reticulate::py_available(T)){
+      message("Executing text mining, please wait.")
+      file <- system.file("Python", "Textmining.py", package = "ImmunoMet", mustWork = T)
+      python <- reticulate::py_config()$python
+      command <- sprintf("%s %s %s", python, file, config_path)
+      system(command)
+      message("Text mining succesful")
+    }
+  }
+}

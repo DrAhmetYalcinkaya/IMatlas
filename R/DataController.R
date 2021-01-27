@@ -64,34 +64,35 @@ load_interaction_data <- function(options, prot_file="Protein-protein.csv", full
       setwd(options$folder)
       if (full_load){
           ## Non-Indexed files
-          protein_go_df <<- read_file("Protein_gos.csv")
-          protein_go_df <<- unique(protein_go_df)
-          prot_names <<- read_file("Protein_names.csv")
-          mm_interactions <<- read_file("Metabolite-metabolite.csv")
-          pm_interactions <<- read_file("Metabolite_uniprot_id.csv")
-          colnames(pm_interactions) <<- c("From", "To")
+          env$protein_go_df <- read_file("Protein_gos.csv")
+          env$protein_go_df <- unique(env$protein_go_df)
+          env$prot_names <- read_file("Protein_names.csv")
+          env$mm_interactions <- read_file("Metabolite-metabolite.csv")
+          env$pm_interactions <- read_file("Metabolite_uniprot_id.csv")
+          colnames(env$pm_interactions) <- c("From", "To")
           
-          met_biospecimen <<- read_file("Metabolite_biospecimen.csv")
-          met_cellular <<- read_file("Metabolite_cellular.csv")
-          met_path <<- read_file("Metabolite_pathway.csv")
-          met_class <<- read_file("Metabolite_class.csv")
-          met_superclass <<- read_file("Metabolite_super_class.csv")
+          env$met_biospecimen <- read_file("Metabolite_biospecimen.csv")
+          env$met_cellular <- read_file("Metabolite_cellular.csv")
+          env$met_path <- read_file("Metabolite_pathway.csv")
+          env$met_class <- read_file("Metabolite_class.csv")
+          env$met_superclass <- read_file("Metabolite_super_class.csv")
+          env$go_metabolite <- read_file("go_metabolite.csv")
           
           ## Indexed files
-          go_name_df <<- read_file("Go_names.csv", "GOID")
-          meta_names <<- read_file("Metabolite_name.csv", "ID")
-          colnames(meta_names) <<- c("ID", "Name")
-          prot_names <<- read_file("Protein_names.csv", "ID")
-          enzyme_df <<- read_file("Ec_numbers.csv", "ID")
-          prot_trans <<- read_file("Protein_transporter.csv", "ID")
-          cofactor_df <<- read_file("Cofactors.csv", "ID")
+          env$go_name_df <- read_file("Go_names.csv", "GOID")
+          env$meta_names <- read_file("Metabolite_name.csv", "ID")
+          colnames(env$meta_names) <- c("ID", "Name")
+          env$prot_names <- read_file("Protein_names.csv", "ID")
+          env$enzyme_df <- read_file("Ec_numbers.csv", "ID")
+          env$prot_trans <- read_file("Protein_transporter.csv", "ID")
+          env$cofactor_df <- read_file("Cofactors.csv", "ID")
           #heatmap_df <<- read_file("heatmap_matrix.csv", "V1")
           #heatmap_df <<- heatmap_df[,-1]
       }
     
-      pp_interactions <<- read_file(prot_file)
-      pm_interactions <<- pm_interactions[which(pm_interactions$To %in% c(t(pp_interactions))),]
-      interactions <<- rbind.fill(pp_interactions, mm_interactions, pm_interactions)
+  env$pp_interactions <- read_file(prot_file)
+  env$pm_interactions <- env$pm_interactions[which(env$pm_interactions$To %in% c(t(env$pp_interactions))),]
+  env$interactions <- rbind.fill(env$pp_interactions, env$mm_interactions, env$pm_interactions)
 }
 
 #'@title Build a new graph

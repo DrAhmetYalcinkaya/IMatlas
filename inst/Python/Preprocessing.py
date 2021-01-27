@@ -1,5 +1,24 @@
 #!/usr/bin/env python
+
 import pip
+
+def import_or_install(packages):
+    for package, to_install in packages.items():
+        try:
+            __import__(package)
+        except ImportError:
+            pip.main(['install', to_install])  
+
+packages = {
+    "yaml": "pyYaml",
+    "pandas": "pandas",
+    "numpy": "numpy",
+    "json": "json",
+    "gzip": "gzip"
+}
+
+import_or_install(packages)
+
 import importlib
 import os
 import sys
@@ -45,7 +64,7 @@ def main(config_path):
     log.close()
 
 if __name__ == "__main__":
-    config_path = "../config.yaml"
+    config_path = "config.yaml"
     if len(sys.argv) > 1:
         config_path = sys.argv[1].lstrip("'").rstrip("'").lstrip('"').rstrip('"')
     main(config_path)
