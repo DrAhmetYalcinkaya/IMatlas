@@ -9,17 +9,12 @@ def import_or_install(packages):
         except ImportError:
             pip.main(['install', to_install])  
 
-packages = {
-    "yaml": "pyYaml",
-    "pandas": "pandas",
-    "numpy": "numpy",
-    "json": "json",
-    "gzip": "gzip"
+packages = {"yaml": "pyYaml", "pandas": "pandas", "numpy": "numpy", "zipfile": "zipfile",
+    "json": "json", "gzip": "gzip", "requests": "requests", "pathlib": "pathlib",
+    "xml": "xml", "re": "re", "concurrent": "concurrent", "io": "io"
 }
-
 import_or_install(packages)
 
-import importlib
 import os
 import sys
 import yaml
