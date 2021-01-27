@@ -26,7 +26,7 @@ get_gos <- function(options){
 read_file <- function(source, index_column){
   if (!file.exists(source)){
     stop(paste("Data files not found at the current location.", 
-    "Consider executing 'run_preprocessing(config_path)' first.", call. = F))
+    "Consider executing 'run_preprocessing(config_path)' first."), call. = F)
   }
   df <- suppressWarnings(data.table::fread(source, sep = ",", data.table = F))
   if (!missing(index_column)){

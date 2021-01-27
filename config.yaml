@@ -4,7 +4,10 @@
 ## Do not alter the preprocessing script unless adaptations are necessary
 
 # Folder for data files:
-folder: 
+folder: Data/
+relative_path: True
 
-# Gene Ontology identifier to use for filter (GO:0002376 = Immune system process)
-GO_ID: 
+# Parse Options
+
+# Gene Ontology identifier to use for filter (GO:0045087 = Innate Immune response)
+GO_ID: GO:0002376

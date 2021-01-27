@@ -21,21 +21,22 @@ rcmdcheck::rcmdcheck()
 
 
 
-#devtools::install_github(repo = "vanhasseltlab/ImmuneMetAtlas", 
-#                         auth_token = "745f3796c07ee277ce332f2c155ff955a64093aa")
+devtools::install_github(repo = "vanhasseltlab/ImmuneMetAtlas", 
+                         auth_token = "745f3796c07ee277ce332f2c155ff955a64093aa")
 
 install <- function(){
   setwd("~/ImmunoMet/ImmunoMet")
   devtools::load_all()
   devtools::install(upgrade = "never")
 }
+setwd("~/ImmunoMet/ImmunoMet")
 install()
 library(ImmunoMet)
-path <- "C:/Users/Pascal/Documents/ImmuneMetAtlas/App/config.yaml"
-run_preprocessing(path)
-load_data(path)
+#path <- "config.yaml"
+run_preprocessing()
+load_data()
 run_shiny()
-run_textmining(path)
+run_textmining()
 
 g <- example_graph()
 get_metabolite_metadata(g, c("centrality", "id"))

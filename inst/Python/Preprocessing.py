@@ -39,6 +39,7 @@ def main(config_path):
         options = yaml.load(file, Loader=yaml.FullLoader)
         Path(options["folder"]).mkdir(parents=True, exist_ok=True)
     print("Opened Config file.")
+    options['folder'] = options['folder'].rstrip("/")
 
     log = open(f"{options['folder']}/Log_preprocessing.txt", "w", buffering=1)
 

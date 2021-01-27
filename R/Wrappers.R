@@ -10,9 +10,18 @@
 #'@importFrom yaml read_yaml
 #'@importFrom GO.db GOBPOFFSPRING 
 #'@importFrom AnnotationDbi Term
-load_data <- function(config, neighbours=0, full=T, print_summary=T){
+load_data <- function(config="config.yaml", neighbours=0, full=T, print_summary=T){
     env <<- sys.frame()
     env$options <- yaml::read_yaml(config)
+    if ("relative_path" %in% names(env$options)){
+      if (tolower(env$options$relative_path) == "true"){
+        env$options$folder <- sprintf("%s/%s", getwd(), env$options$folder)
+      }
+    }
+    if(!dir.exists(env$options$folder)){
+      stop(paste("Data files not found at the current location.", 
+                 "Consider executing 'run_preprocessing(config_path)' first."), call. = F)
+    }
     prot_files <- list("Direct" = "Protein-protein.csv", 
                        "First Indirect" = "Protein-protein_1.csv", 
                        "Second Indirect" = "Protein-protein_2.csv")
@@ -98,7 +107,7 @@ print_graph <- function(g, type){
   
   name <- "protein"
   if (type == "GO Simple") name <- "GO"
-  message(sprintf("Search filter: %s", g$main))
+  message(sprintf("Search filter: %s",  paste(g$main, collapse = ", ")))
   message(sprintf("Found %d nodes & %d edges representing %d metabolites & %d %s", 
                   length(V(g)), length(E(g)), mets, prots, name))
 }
@@ -154,7 +163,13 @@ get_metabolite_go_pvalues <- function(graph){
 
 #'@title Run Preprocessing
 #'@importFrom reticulate py_available py_config
-run_preprocessing <- function(config_path){
+run_preprocessing <- function(config_path="config.yaml"){
+  options <- yaml::read_yaml(config_path)
+  if ("relative_path" %in% names(options)){
+    if (tolower(options$relative_path) == "true"){
+      options$folder <- sprintf("%s/%s", getwd(), options$folder)
+    }
+  }
   message("This function will run the processing Python scripts. This may take a while (15-30 min)")
   continue <- readline(prompt = "Do you want to continue? (y/n) ")
   if (tolower(continue) == "y"){
@@ -182,7 +197,20 @@ run_preprocessing <- function(config_path){
   }
 }
 
-run_textmining <- function(config_path){
+run_textmining <- function(config_path="config.yaml"){
+  env <<- sys.frame()
+  env$options <- yaml::read_yaml(config_path)
+  if ("relative_path" %in% names(env$options)){
+    if (tolower(env$options$relative_path) == "true"){
+      env$options$folder <- sprintf("%s/%s", getwd(), env$options$folder)
+    }
+  }
+  
+  if(!dir.exists(env$options$folder)){
+    stop(paste("Data files not found at the current location.", 
+               "Consider executing 'run_preprocessing(config_path)' first."), call. = F)
+  }
+  
   message("This function will run the text mining Python script. This script takes a while to process due to many API calls.")
   continue <- readline(prompt = "Do you want to continue? (y/n) ")
   if (tolower(continue) == "y"){
