@@ -60,11 +60,12 @@ generate_go_metabolite_df <- function(id){
 #'@param prot_file String name of the protein file
 #'@param full_load Boolean value for loading everything or just the protein-protein interaction file
 #'@importFrom plyr rbind.fill
-load_interaction_data <- function(options, prot_file="Protein-protein.csv", full_load = T){
-      setwd(options$folder)
+load_interaction_data <- function(prot_file="Protein-protein.csv", full_load = T){
       if (full_load){
+        
           ## Non-Indexed files
           env$protein_go_df <- read_file("Protein_gos.csv")
+          
           env$protein_go_df <- unique(env$protein_go_df)
           env$prot_names <- read_file("Protein_names.csv")
           env$mm_interactions <- read_file("Metabolite-metabolite.csv")
@@ -76,8 +77,7 @@ load_interaction_data <- function(options, prot_file="Protein-protein.csv", full
           env$met_path <- read_file("Metabolite_pathway.csv")
           env$met_class <- read_file("Metabolite_class.csv")
           env$met_superclass <- read_file("Metabolite_super_class.csv")
-          env$go_metabolite <- read_file("go_metabolite.csv")
-          
+
           ## Indexed files
           env$go_name_df <- read_file("Go_names.csv", "GOID")
           env$meta_names <- read_file("Metabolite_name.csv", "ID")

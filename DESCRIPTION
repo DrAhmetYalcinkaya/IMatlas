@@ -1,6 +1,6 @@
 Package: ImmunoMet
 Title: What the Package Does (One Line, Title Case)
-Version: 0.0.1.0000
+Version: 0.0.0.9000
 Authors@R: 
     person(given = "First",
            family = "Last",
@@ -20,6 +20,8 @@ Imports:
     colourpicker,
     httr,
     dplyr,
+    viridis,
+    stringr,
     shinythemes,
     shinycssloaders,
     waiter,
@@ -39,5 +41,4 @@ Imports:
     ggplot2,
     GO.db,
     plyr,
-    reticulate,
-    viridis
+    reticulate

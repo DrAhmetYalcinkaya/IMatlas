@@ -1,3 +1,20 @@
+#'@importFrom stringr str_match 
+adjust_folder <- function(options){
+  if (is.na(str_match(options$folder, ".*/$"))){
+    options$folder <- paste0(options$folder, "/")
+  }
+  if ("relative_path" %in% names(options)){
+    if (tolower(options$relative_path) == "true"){
+      options$folder <- sprintf("%s/%s", getwd(), options$folder)
+    }
+  }
+  if(!dir.exists(options$folder)){
+    dir.create(options$folder, recursive = TRUE)
+  }
+  return(options)
+}
+
+
 #'@title Load Data
 #'@description Variables and files are loaded to the global environment to 
 #'be used by other functions inside this package.
@@ -12,30 +29,26 @@
 #'@importFrom AnnotationDbi Term
 load_data <- function(config="config.yaml", neighbours=0, full=T, print_summary=T){
     env <<- sys.frame()
-    env$options <- yaml::read_yaml(config)
-    if ("relative_path" %in% names(env$options)){
-      if (tolower(env$options$relative_path) == "true"){
-        env$options$folder <- sprintf("%s/%s", getwd(), env$options$folder)
-      }
-    }
-    if(!dir.exists(env$options$folder)){
-      stop(paste("Data files not found at the current location.", 
-                 "Consider executing 'run_preprocessing(config_path)' first."), call. = F)
-    }
+    env$options <- adjust_folder(yaml::read_yaml(config))
+    
+    
     prot_files <- list("Direct" = "Protein-protein.csv", 
                        "First Indirect" = "Protein-protein_1.csv", 
                        "Second Indirect" = "Protein-protein_2.csv")
     
     prot_file <- prot_files[[names(prot_files)[neighbours + 1]]]
     env$pp_confidence <- reactiveVal(0)
-    load_interaction_data(env$options, prot_file, full)
+    load_interaction_data(prot_file)
+    if (full){
+      env$go_metabolite <- read_file("go_metabolite.csv")
+    }
     
     env$offspring <- as.list(GO.db::GOBPOFFSPRING)
     go_name_df <- data.frame(GOID = as.vector(names(env$offspring)), 
                              Name = as.vector(AnnotationDbi::Term(names(env$offspring))))
     rownames(go_name_df) <- go_name_df$GOID
     go_name_df <- go_name_df[c(env$offspring[[env$options$GO_ID]], env$options$GO_ID),]
-    env$go_name_df <- go_name_df[which(go_name_df$GOID %in% protein_go_df$GOID),]
+    env$go_name_df <- go_name_df[which(go_name_df$GOID %in% env$protein_go_df$GOID),]
     env$is_reactive = F
     if (print_summary) print_data_summary(config)
 }
@@ -164,29 +177,24 @@ get_metabolite_go_pvalues <- function(graph){
 #'@title Run Preprocessing
 #'@importFrom reticulate py_available py_config
 run_preprocessing <- function(config_path="config.yaml"){
-  options <- yaml::read_yaml(config_path)
-  if ("relative_path" %in% names(options)){
-    if (tolower(options$relative_path) == "true"){
-      options$folder <- sprintf("%s/%s", getwd(), options$folder)
-    }
-  }
   message("This function will run the processing Python scripts. This may take a while (15-30 min)")
   continue <- readline(prompt = "Do you want to continue? (y/n) ")
   if (tolower(continue) == "y"){
       if (reticulate::py_available(T)){
+        env <- sys.frame()
+        env$options <- adjust_folder(yaml::read_yaml(config_path))
         message("Executing Preprocessing scripts, please wait.")
         file <- system.file("Python", "Preprocessing.py", package = "ImmunoMet", mustWork = T)
         python <- reticulate::py_config()$python
         command <- sprintf("%s %s %s", python, file, config_path)
         system(command)
         message("Testing if new data can be loaded")
+
         load_data(config_path, full=F)
         message("Performing final analysis")
-        options <- yaml::read_yaml(config_path)
-        df <- generate_go_metabolite_df(options$GO_ID)
-        write.csv(df, sprintf("%s/go_metabolite.csv", options$folder), row.names = F)
-        env <- parent.frame()
-        env$go_metabolite <- read_file(sprintf("%s/go_metabolite.csv", options$folder))
+        
+        env$go_metabolite <- generate_go_metabolite_df(env$options$GO_ID)
+        write.csv(env$go_metabolite, paste0(env$options$folder, "go_metabolite.csv"), row.names = F)
         message("Preprocessing succesful")
       } else {
         stop(paste("Preprocessing failed. No Python3 installation was found.",
@@ -199,18 +207,7 @@ run_preprocessing <- function(config_path="config.yaml"){
 
 run_textmining <- function(config_path="config.yaml"){
   env <<- sys.frame()
-  env$options <- yaml::read_yaml(config_path)
-  if ("relative_path" %in% names(env$options)){
-    if (tolower(env$options$relative_path) == "true"){
-      env$options$folder <- sprintf("%s/%s", getwd(), env$options$folder)
-    }
-  }
-  
-  if(!dir.exists(env$options$folder)){
-    stop(paste("Data files not found at the current location.", 
-               "Consider executing 'run_preprocessing(config_path)' first."), call. = F)
-  }
-  
+  env$options <- adjust_folder(yaml::read_yaml(config_path))
   message("This function will run the text mining Python script. This script takes a while to process due to many API calls.")
   continue <- readline(prompt = "Do you want to continue? (y/n) ")
   if (tolower(continue) == "y"){

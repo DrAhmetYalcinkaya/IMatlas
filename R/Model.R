@@ -24,9 +24,10 @@ get_gos <- function(options){
 #'file <- read_file("metabolites.csv", "Name")
 #'@importFrom data.table fread
 read_file <- function(source, index_column){
+  source <- paste0(env$options$folder, source)
   if (!file.exists(source)){
-    stop(paste("Data files not found at the current location.", 
-    "Consider executing 'run_preprocessing(config_path)' first."), call. = F)
+    stop(paste0(sprintf("Data files not found at location: '%s'. ", env$options$folder),
+                "Consider executing 'run_preprocessing(config_path)' first."), call. = F)
   }
   df <- suppressWarnings(data.table::fread(source, sep = ",", data.table = F))
   if (!missing(index_column)){

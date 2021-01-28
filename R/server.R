@@ -16,7 +16,7 @@ default_settings <- function(){
 
 confirm_click <- function(input){
   prot_file <- unlist(prot_files[[input$dataid]])
-  load_interaction_data(options, prot_file, full_load=F)
+  load_interaction_data(prot_file, full_load=F)
   choices(get_sorted_interaction_names())
   shinyjs::runjs('$("ul.menu-open").slideUp(); $(".active")[0].classList.remove("active");')
 }

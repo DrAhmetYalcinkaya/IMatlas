@@ -4,7 +4,7 @@ library(usethis)
 setwd("~/ImmunoMet/ImmunoMet")
 usethis::use_description(fields = list("biocViews" = ""))
 usethis::use_mit_license("Pascal Maas")
-packages <- c("shiny", "igraph", "colourpicker", "httr", "dplyr", "viridis",
+packages <- c("shiny", "igraph", "colourpicker", "httr", "dplyr", "viridis", "stringr",
               "shinythemes", "shinycssloaders", "waiter", "AnnotationDbi",
               "shinydashboard", "htmlwidgets", "heatmaply", "DT", "yaml",
               "RColorBrewer", "shinyalert", "plotly", "shinyjs", "data.table", 
@@ -24,19 +24,24 @@ rcmdcheck::rcmdcheck()
 devtools::install_github(repo = "vanhasseltlab/ImmuneMetAtlas", 
                          auth_token = "745f3796c07ee277ce332f2c155ff955a64093aa")
 
-install <- function(){
-  setwd("~/ImmunoMet/ImmunoMet")
-  devtools::load_all()
-  devtools::install(upgrade = "never")
-}
+
 setwd("~/ImmunoMet/ImmunoMet")
-install()
+devtools::load_all()
+devtools::install(upgrade = "never")
+
+
 library(ImmunoMet)
-#path <- "config.yaml"
-run_preprocessing()
-load_data()
+run_preprocessing("config.yaml")
+
+load_data("config.yaml")
+getwd()
+
+options <- yaml::read_yaml("config.yaml")
+adjust_folder(options)
+
+
 run_shiny()
-run_textmining()
+run_textmining("config.yaml")
 
 g <- example_graph()
 get_metabolite_metadata(g, c("centrality", "id"))
@@ -49,21 +54,5 @@ g <- get_graph("Heparin", type = "Metabolites/Proteins")
 g <- get_graph("Heparin", type = "GO Simple")
 g <- get_graph("macrophage activation", omit_lipids = T)
 plot(g)
-
-c <- function(){
-  print(sys.parent())
-}
-
-b <- function(){
-  c()
-}
-
-a <- function(){
-  env <<- parent.frame()
-  b()
-}
-
-a()
-test
 
 
