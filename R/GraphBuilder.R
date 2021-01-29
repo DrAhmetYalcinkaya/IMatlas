@@ -188,7 +188,7 @@ to_plotly <- function(g){
              showgrid = FALSE, autorange = TRUE
   )
   df <- igraph::as_data_frame(g, what = "vertices")
-  p <- ggplotly(to_gg_plot(g, df),  width = 1600, tooltip = c("text")) %>%
+  p <- ggplotly(to_gg_plot(g, df), tooltip = c("text")) %>%
     plotly::layout(showlegend = T, xaxis = ax, yaxis = ax) %>% 
     plotly::config(scrollZoom = TRUE, toImageButtonOptions = list(format = "svg"), 
                    displaylogo = F, editable = F, modeBarButtonsToRemove = 
@@ -204,6 +204,7 @@ to_plotly <- function(g){
   }
   return(p)
 }
+
 
 #'@title Return the coordinates for edges
 #'@usage get_edge_shapes(
@@ -285,7 +286,7 @@ calculate_pvalues <- function(g){
   vec <- p.adjust(sapply(names(ids), simplify = F, USE.NAMES = T, function(id){
     return(fishers_test(id, ids, all_go))
   }))
-  vec <- vec[vec < 1]
+  vec <- vec[vec < 0.05]
   names(vec) <- get_go_names(names(vec))
   return(vec)
 }
@@ -426,29 +427,35 @@ get_shortest_path_graph <- function(g, filter){
 #'    g
 #')
 #'@param g iGraph object obtained from to_graph() or get_graph()
-#'@importFrom dplyr filter
+#'@importFrom dplyr filter group_by left_join ungroup right_join summarize n
 #'@importFrom plotly ggplotly
 #'@importFrom ggplot2 ggplot geom_point ylim scale_color_gradient
 #'theme_minimal scale_size_continuous
 get_2d_scatter <- function(g){
-    df <- unlist(igraph::as_data_frame(g, what = "vertices")$go)
-    to_pick <- names(df) %in% colnames(heatmap_df) 
-    names <- names(df)[to_pick]
-    stats <- df[to_pick]
-    vals <- heatmap_df[V(g)$name[which(V(g)$type == "Metabolite")], names]
-
-    if (is.null(nrow(vals))){
-        close <- sum(vals)
-        number <- sum(vals > 0)
-        total <- sum(heatmap_df[,names] > 0)
-    } else {
-        close <- colSums(vals)
-        number <- colSums(vals > 0)
-        total <- colSums(heatmap_df[,names] > 0)
-    }
-    df <- data.frame(go = names, Pvalue = stats, Closeness = close, number = number, total = total) %>% dplyr::filter(number > 0)
-    g <- ggplot(df, aes(x = Closeness, y = Pvalue, size = total, color = number, text = go)) + 
-        geom_point() + ylim(0, 0.05) + scale_color_gradient(low="red", high="yellow") + 
+    df <- igraph::as_data_frame(g, what = "vertices")
+    ids <- get_go_ids_by_go(names(unlist(df$go)))
+    pvalues <- unique(data.frame(GO = ids, Pvalue = unlist(df$go)))
+    mets <- get_metabolite_ids(rownames(df))
+    
+    df <- go_metabolite %>%
+      dplyr::filter(GO %in% ids) %>%
+      dplyr::filter(Metabolite %in% mets) %>%
+      dplyr::left_join(pvalues, by = "GO") %>%
+      group_by(GO) %>%
+      summarize(Closeness = mean(Centrality), Pvalue = mean(Pvalue), 
+                Number = dplyr::n()) %>%
+      dplyr::ungroup()
+    
+    df <- cbind(df, Name = get_go_names(df$GO))
+    
+    df <- go_metabolite %>% 
+      dplyr::filter(GO %in% df$GO) %>% 
+      dplyr::group_by(GO) %>% 
+      dplyr::summarize(Total = n()) %>%
+      dplyr::right_join(df, "GO")
+    
+    g <- ggplot(df, aes(text = Name, x = Closeness, y = Pvalue, color = Number, size = Total)) + 
+        geom_point() + ylim(min(df$Pvalue), max(df$Pvalue)) + scale_color_gradient(low="red", high="yellow") + 
       theme_minimal() + scale_size_continuous(range = c(5, 15))
     return(plotly::ggplotly(g))
 }

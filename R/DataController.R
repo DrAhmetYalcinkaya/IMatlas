@@ -118,7 +118,7 @@ build_button <- function(filter){
         output$heatmapplot <- renderPlotly(get_heatmap_plot(graph))
         output$barplot_centrality <- renderPlotly(get_barplot(graph))
         output$barplot_gos <- renderPlotly(get_go_barplot(graph))
-        #output$scatter_plot <- renderPlotly(get_2d_scatter(graph))
+        output$scatter_plot <- renderPlotly(get_2d_scatter(graph))
         output$datatable_nodes <- renderDataTable(get_node_table(graph))
         output$datatable_edges <- renderDataTable(get_edge_table(graph))
     }

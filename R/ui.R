@@ -55,7 +55,6 @@ side_bar_menu <- function(){
 #' @import shinydashboard shinythemes shinycssloaders shinycssloaders
 #' @importFrom shinyjs hidden useShinyjs
 #' @importFrom waiter use_waiter
-#' @importFrom shinyalert useShinyalert
 #' @importFrom plotly plotlyOutput
 #' @importFrom DT dataTableOutput
 ui <- function(){
@@ -66,7 +65,6 @@ ui <- function(){
                 dashboardBody(
                   shinyjs::hidden(
                     div(id = "main_page",
-                        shinyalert::useShinyalert(), 
                         includeScript(system.file("www", "listeners.js", package = "ImmunoMet", mustWork = T)),
                         tags$head(includeCSS(system.file("www", "style.css", package = "ImmunoMet", mustWork = T))),
                         tabItems(

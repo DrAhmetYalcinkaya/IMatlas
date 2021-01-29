@@ -2,3 +2,6 @@ Data/
 .Rhistory
 ImmunoMet.Rproj
 README.rmd
+.Rproj.user
+NonPackageCode
+build.r

@@ -367,15 +367,9 @@ convert_names_to_ids <- function(names){
 
 #'@title Return a network / graph 
 network_from_gos <- function(gos, mode = "names"){
-    go_name_df <- change_index(go_name_df, "Name")
-    gos <- go_name_df[gos,]$GOID
-    gos <- as.vector(na.omit(c(unlist(offspring[gos]), gos)))
-    go_name_df <- change_index(go_name_df, "GOID")
-    gos <- go_name_df[gos, ]$Name
     proteins <- unique(get_proteins_by_go(gos))
     ids <- na.omit(unique(c(proteins, get_pm_interaction_ids(proteins, mode="single"))))
-    df <- get_all_interactions(ids, mode = "both")
-    return(df)
+    return(get_all_interactions(ids, mode = "both"))
 }
 
 #'@title Get N neirest neighbours with a maximum number of edges

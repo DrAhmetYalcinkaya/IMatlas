@@ -2,3 +2,5 @@
 ^\.Rproj\.user$
 ^LICENSE\.md$
 ^Data.*$
+^NonPackageCode.*$
+^build.R$

@@ -1,3 +1,15 @@
+def import_or_install(packages):
+    for package, to_install in packages.items():
+        try:
+            __import__(package)
+        except ImportError:
+            pip.main(['install', to_install]) 
+
+packages = {"yaml": "pyYaml", "pandas": "pandas", "json": "json","requests": "requests", 
+            "pathlib": "pathlib", "concurrent": "concurrent", "time": "time", "random": "random", 
+            "math": "math", "sys": "sys"}
+import_or_install(packages)
+
 import pandas as pd
 import requests
 import json
@@ -27,9 +39,9 @@ class TextMining:
         to human-related studies. Lastly, the paper must be of the type 'research article'.
         This query has been made with the query builder of EuropePMC.
         """
-        #query = 'ABSTRACT:"{0}" OR RESULTS:"{0}" OR METHODS:"{0}" OR TABLE:"{0}" OR SUPPL:"{0}" OR FIG:"{0}"'.format(search)
-        query = f'"{search}" AND ("patient" OR "human") AND (PUB_TYPE:"Journal Article" OR PUB_TYPE:"article-commentary" OR PUB_TYPE:"research-article" OR PUB_TYPE:"protocol" OR PUB_TYPE:"rapid-communication" OR PUB_TYPE:"product-review")'
-        url = f'https://www.ebi.ac.uk/europepmc/webservices/rest/search?query={query}&synonym=true&resultType=idlist&pageSize={size}&cursorMark={cursor}&format=json'
+        query = '(ABSTRACT:"{0}" OR RESULTS:"{0}" OR METHODS:"{0}" OR TABLE:"{0}" OR SUPPL:"{0}" OR FIG:"{0}") AND ("patient" OR "human") AND PUB_TYPE:"Journal Article"'.format(search)
+        url = f'https://www.ebi.ac.uk/europepmc/webservices/rest/search?query={query}&synonym=true&resultType=idlist&pageSize={size}&cursorMark={cursor}&format=json'      
+        print("Current progress: %.2f%%" % ((self.processed + 1) / self.total * 100), end = "\r")  
         return json.loads(requests.get(url).content)
 
     def search(self, term, n):
@@ -55,7 +67,6 @@ class TextMining:
             time.sleep(30)
 
         self.processed += 1
-        print("Current progress: %.2f%%" % ((self.processed + 1) / self.total * 100), end = "\r")
         return ids
 
     def search_all(self, list_of_terms):
@@ -69,13 +80,14 @@ class TextMining:
         with ThreadPoolExecutor() as ex:
             futures = [ex.submit(self.search, term, n) 
                         for n, term in enumerate(list_of_terms)]
-
             for i, f in enumerate(futures):
                 ids = f.result()
                     
                 if len(ids) > 0:
                     term = list_of_terms[i]
                     dic[term] = ids
+            
+
         return dic
 
 
@@ -212,7 +224,7 @@ def main(config_path):
     df.to_csv(f"extended_textmining_all.tsv", sep="\t", index = False)
 
 if __name__ == "__main__":
-    config_path = "../config.yaml"
+    config_path = "config.yaml"
     if len(sys.argv) > 1:
         config_path = sys.argv[1].lstrip("'").rstrip("'").lstrip('"').rstrip('"')
     main(config_path)

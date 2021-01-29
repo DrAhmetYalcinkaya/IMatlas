@@ -177,7 +177,7 @@ get_metabolite_go_pvalues <- function(graph){
 #'@title Run Preprocessing
 #'@importFrom reticulate py_available py_config
 run_preprocessing <- function(config_path="config.yaml"){
-  message("This function will run the processing Python scripts. This may take a while (15-30 min)")
+  message("This function will run the processing Python scripts. This may take a while (up to 60 min)")
   continue <- readline(prompt = "Do you want to continue? (y/n) ")
   if (tolower(continue) == "y"){
       if (reticulate::py_available(T)){
@@ -206,12 +206,12 @@ run_preprocessing <- function(config_path="config.yaml"){
 }
 
 run_textmining <- function(config_path="config.yaml"){
-  env <<- sys.frame()
-  env$options <- adjust_folder(yaml::read_yaml(config_path))
   message("This function will run the text mining Python script. This script takes a while to process due to many API calls.")
   continue <- readline(prompt = "Do you want to continue? (y/n) ")
   if (tolower(continue) == "y"){
     if (reticulate::py_available(T)){
+      env <<- sys.frame()
+      env$options <- adjust_folder(yaml::read_yaml(config_path))
       message("Executing text mining, please wait.")
       file <- system.file("Python", "Textmining.py", package = "ImmunoMet", mustWork = T)
       python <- reticulate::py_config()$python
