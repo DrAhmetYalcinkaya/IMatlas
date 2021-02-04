@@ -91,7 +91,6 @@ server <- function(input, output, session) {
                    closeOnClickOutside = F, html = T, size = "l", create_settings(), 
                    callbackR = function(x) if (!x) default_settings())
     })
-  
     observeEvent(input$click_id, { # show modal in graph
         node <- V(env$graph)[get_vertice_id(env$graph, input$click_id)]
         df <- igraph::as_data_frame(env$graph, what = "vertices")[node,
@@ -120,7 +119,7 @@ server <- function(input, output, session) {
   
     observeEvent(c(input$col_met, input$col_pro, input$col_enz, input$col_tra, input$size), {
         req(!is.null(env$graph))
-        env$graph <<- add_vertice_colors(env$graph, get_metabolite_vertice_ids(env$graph))
+        env$graph <<- add_vertice_colors(env$graph)
         output$graph <- renderPlotly(to_plotly(env$graph))
     })
   
