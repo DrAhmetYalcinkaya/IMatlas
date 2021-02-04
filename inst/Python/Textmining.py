@@ -39,8 +39,10 @@ class TextMining:
         to human-related studies. Lastly, the paper must be of the type 'research article'.
         This query has been made with the query builder of EuropePMC.
         """
-        query = '(ABSTRACT:"{0}" OR RESULTS:"{0}" OR METHODS:"{0}" OR TABLE:"{0}" OR SUPPL:"{0}" OR FIG:"{0}") AND ("patient" OR "human") AND PUB_TYPE:"Journal Article"'.format(search)
-        url = f'https://www.ebi.ac.uk/europepmc/webservices/rest/search?query={query}&synonym=true&resultType=idlist&pageSize={size}&cursorMark={cursor}&format=json'      
+        #query = '(ABSTRACT:"{0}" OR RESULTS:"{0}" OR METHODS:"{0}" OR TABLE:"{0}" OR SUPPL:"{0}" OR FIG:"{0}")'.format(search)
+        base = "https://www.ebi.ac.uk/europepmc/webservices/rest/"
+        query = '"%s" AND ("patient" OR "human") AND PUB_TYPE:"Journal Article AND (SRC:"MED")"'.format(search)
+        url = f'{base}search?query={query}&synonym=true&resultType=idlist&pageSize={size}&cursorMark={cursor}&format=json'      
         print("Current progress: %.2f%%" % ((self.processed + 1) / self.total * 100), end = "\r")  
         return json.loads(requests.get(url).content)
 
@@ -64,21 +66,27 @@ class TextMining:
                 cursor = res["nextCursorMark"] 
 
         except Exception:
-            time.sleep(30)
+            time.sleep(5)
 
         self.processed += 1
         return ids
 
-    def search_all(self, list_of_terms):
+    def search_all(self, list_of_terms, type):
         """
         Wrapper method for a list of given terms to search for. 
         Returns a dictionary containing a term - pubmed identifiers construction.
         """
+
+        prefix = {
+            "Metabolite": "CHEBITERM:",
+            "GO": "GOTERM:"
+        }
+
         dic = {}
         self.processed = 0
         self.total = len(list_of_terms)
         with ThreadPoolExecutor() as ex:
-            futures = [ex.submit(self.search, term, n) 
+            futures = [ex.submit(self.search, prefix[type] + term, n) 
                         for n, term in enumerate(list_of_terms)]
             for i, f in enumerate(futures):
                 ids = f.result()
@@ -87,7 +95,7 @@ class TextMining:
                     term = list_of_terms[i]
                     dic[term] = ids
             
-
+        print()
         return dic
 
 
@@ -137,9 +145,11 @@ class EBI:
         """
         total = {}
         id_names = {allowed[i]: names[i] for i in range(len(names))}
-        to_search = [names[a] for a in to_search]
+        names_id = {names[i]:allowed[i] for i in range(len(names))}
+        to_search = [names_id[x] for x in set(to_search)]
         for i in range(0, len(to_search), self.n):
             params = ",".join(to_search[i : i + self.n])
+            print(params)
             for r in self.get_request(params, endpoint = "ancestors"):
                 key = id_names[r["id"]]
                 total[key] = [id_names[ances] for ances in r["ancestors"] if ances in allowed] + [key]
@@ -163,7 +173,7 @@ def get_expanded_df(ebi, df, options):
     go_df = pd.read_csv(f"{options['folder']}/Go_names.csv")
     gos = list(go_df["GOID"])
     names = list(go_df["Name"])
-    ancestors = ebi.get_ancestors(set(df["Gene Ontology"]), gos, names)
+    ancestors = ebi.get_ancestors(list(df["Gene Ontology"]), gos, names)
     df["Ancestors"] = ["\t".join(ancestors[go]) for go in df["Gene Ontology"]]
 
     df = df[["Ancestors", "Metabolite", "Paper ID"]]
@@ -210,18 +220,19 @@ def main(config_path):
     
     gos = list(set(pd.read_csv(f"{options['folder']}/Go_names.csv")["Name"]))
     mets = list(set(pd.read_csv(f"{options['folder']}/Metabolite_name.csv")["name"]))
-    df = find_overlap(text_mining.search_all(mets), text_mining.search_all(gos))
-    df.to_csv(f"raw_textmining_all.tsv", sep="\t", index = False)
+    df = find_overlap(text_mining.search_all(gos, type = "GO"), 
+                      text_mining.search_all(mets, type = "Metabolite"))
+    df = get_expanded_df(ebi, df, options)
 
-    for prefix in ["raw", "expanded"]:
-        write_counts(df, ["Paper ID"], prefix, "papers")
-        write_counts(df, ["Metabolite"], prefix, "metabolites")
-        write_counts(df, ["Gene Ontology"], prefix, "go")
-        write_counts(df, ["Gene Ontology", "Metabolite"], prefix, "counts")
-        if prefix == "raw":
-            df = get_expanded_df(ebi, df, options)
+    df.to_csv(f"textmining_all.tsv", sep="\t", index = False)
 
-    df.to_csv(f"extended_textmining_all.tsv", sep="\t", index = False)
+    #for prefix in ["raw", "expanded"]:
+    #    write_counts(df, ["Paper ID"], prefix, "papers")
+    #    write_counts(df, ["Metabolite"], prefix, "metabolites")
+    #    write_counts(df, ["Gene Ontology"], prefix, "go")
+    #    write_counts(df, ["Gene Ontology", "Metabolite"], prefix, "counts")
+    #    if prefix == "raw":
+    #df.to_csv(f"extended_textmining_all.tsv", sep="\t", index = False)
 
 if __name__ == "__main__":
     config_path = "config.yaml"

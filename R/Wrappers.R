@@ -27,7 +27,7 @@ adjust_folder <- function(options){
 #'@importFrom yaml read_yaml
 #'@importFrom GO.db GOBPOFFSPRING 
 #'@importFrom AnnotationDbi Term
-load_data <- function(config="config.yaml", neighbours=0, full=T, print_summary=T){
+load_data <- function(config="config.yaml", neighbours=0, confidence=0, full=T, print_summary=T){
     env <<- sys.frame()
     env$options <- adjust_folder(yaml::read_yaml(config))
     
@@ -37,8 +37,8 @@ load_data <- function(config="config.yaml", neighbours=0, full=T, print_summary=
                        "Second Indirect" = "Protein-protein_2.csv")
     
     prot_file <- prot_files[[names(prot_files)[neighbours + 1]]]
-    env$pp_confidence <- reactiveVal(0)
-    load_interaction_data(prot_file)
+    env$pp_confidence <- reactiveVal(confidence)
+    load_interaction_data(prot_file, confidence)
     if (full){
       env$go_metabolite <- read_file("go_metabolite.csv")
     }
@@ -221,3 +221,4 @@ run_textmining <- function(config_path="config.yaml"){
     }
   }
 }
+

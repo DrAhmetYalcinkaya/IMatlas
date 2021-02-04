@@ -11,7 +11,7 @@ def import_or_install(packages):
 
 packages = {"yaml": "pyYaml", "pandas": "pandas", "numpy": "numpy", "zipfile": "zipfile",
     "json": "json", "gzip": "gzip", "requests": "requests", "pathlib": "pathlib",
-    "xml": "xml", "re": "re", "concurrent": "concurrent", "io": "io"
+    "xml": "xml", "re": "re", "concurrent": "concurrent", "io": "io", "itertools": "itertools"
 }
 import_or_install(packages)
 

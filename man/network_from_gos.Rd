@@ -4,7 +4,7 @@
 \alias{network_from_gos}
 \title{Return a network / graph}
 \usage{
-network_from_gos(gos, mode = "names")
+network_from_gos(gos, mode = "names", neighbours = 0, max = Inf)
 }
 \description{
 Return a network / graph

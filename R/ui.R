@@ -10,7 +10,7 @@ ui.top_row <- function(suffix){
   return(fluidRow(id="search-row",
                   column(1),
                   column(width = 2, selectInput(paste0("mode", suffix), label = "Mode", 
-                                                choices = c("Metabolites/Proteins", "Gene Ontology", "GO Simple", 
+                                                choices = c("Identifiers", "Metabolites/Proteins", "Gene Ontology", "GO Simple", 
                                                             "Pathways", "Superclasses", "Classes"), 
                                                 selected = "Targets", multiple = F)),
                   column(width = 4, selectizeInput(paste0("filter", suffix), label = "Data", choices = NULL, multiple = T, 

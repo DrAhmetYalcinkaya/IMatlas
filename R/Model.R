@@ -166,6 +166,12 @@ get_pp_interactions <- function(ids, mode = "both"){
     return(pp_interactions[get_interactions(pp_interactions, ids, mode),])
 }
 
+get_pp_interaction_ids <- function(ids, mode = "both"){
+  rows <- get_interactions(pp_interactions, ids, mode)
+  if (length(rows > 0)) return(c(t(pp_interactions[rows, c("From", "To")])))
+  return(NULL)
+}
+
 #'@title Get protein-metabolite interactions
 #'@usage get_pm_interactions(
 #'    ids,
@@ -206,10 +212,10 @@ filter_on_confidence <- function(df, conf=0){
 #'@param ids Vector of identifiers that may contain metabolites and/or proteins
 #'@param mode String determining the mode, see examples
 #'@param conf Integer between 0 (low) and 1000 (high) determining the confidence level
-get_all_interactions <- function(ids, mode = "both", conf = 0){
+get_all_interactions <- function(ids, mode = "both"){
     rows <- get_interactions(interactions, ids, mode)
     df <- interactions[rows,]
-    df <- filter_on_confidence(df, conf)
+    df <- filter_on_confidence(df, isolate(pp_confidence()))
     lonely_ids <- which(!ids %in% c(t(df)))
     df <- rbind(df, data.frame("From" = ids[lonely_ids], "To" = ids[lonely_ids]))
     return(df)
@@ -366,8 +372,13 @@ convert_names_to_ids <- function(names){
 }
 
 #'@title Return a network / graph 
-network_from_gos <- function(gos, mode = "names"){
+network_from_gos <- function(gos, mode = "names", neighbours=0, max=Inf){
     proteins <- unique(get_proteins_by_go(gos))
+    if (neighbours > 0){
+      for (i in 1:neighbours){
+        proteins <- unique(c(proteins, get_pp_interaction_ids(proteins, mode = "single")))
+      }
+    }
     ids <- na.omit(unique(c(proteins, get_pm_interaction_ids(proteins, mode="single"))))
     return(get_all_interactions(ids, mode = "both"))
 }

@@ -11,19 +11,63 @@ to_graph <- function(df, type){
     V(g)$go <- get_all_protein_gos(V(g)$id)
     V(g)$centrality <- round(harmonized_closeness(g), 3)
     V(g)$cluster <- igraph::components(g)$membership
+    
     g <- get_gos_per_cluster(g, calculate_pvalues(g))
+    #g <- inheritence_by_threshold(g, calculate_pvalues(g))
     if (type == "GO Simple"){
       g <- construct_metabolite_go_network(g)
     }
-
-    g <- add_metadata_to_graph(g)
-    g <- add_vertice_colors(g)
-    g <- add_class_metadata(g)
-    g <- add_superclass_metadata(g)
+    g <- g %>%
+      add_metadata_to_graph() %>%
+      add_vertice_colors() %>%
+      add_class_metadata %>%
+      add_superclass_metadata()
+    
+#    g <- add_metadata_to_graph(g)
+#    g <- add_vertice_colors(g)
+#    g <- add_class_metadata(g)
+#    g <- add_superclass_metadata(g)
     layout <- as.data.frame(igraph::layout.fruchterman.reingold(g))
     V(g)$x <- layout[,1]
     V(g)$y <- layout[,2]
     return(g)
+}
+
+#'@title inheritance of gos
+#'@importFrom igraph distances V 
+#'@importFrom data.table as.data.table
+#'@importFrom pbapply pblapply
+inheritence_by_threshold <- function(graph, pvalues, threshold = 1, neighbours = 0){
+  # pvalues = named vector of go - pvalue
+  dis <- wide_to_long_by_threshold(
+    igraph::distances(graph, v = V(graph)[get_metabolite_vertice_ids(graph)], 
+                      V(graph)[get_protein_vertice_ids(graph)]), threshold
+  )
+  #dis$From <- get_metabolite_ids(dis$From)
+  dis$To <- get_protein_ids(dis$To)
+  mets <- unique(dis$From)
+  dis <- as.data.table(dis, key = "From")
+
+  V(graph)[mets]$go <- pblapply(mets, cl=4, function(x){
+    prots <- as.vector(dis[x]$To)
+    gos <- protein_go_df[protein_go_df$ID %in% prots,]$GOID
+    if (length(gos) > 0){
+      go_names <- get_go_names(unique(gos))
+      #print(go_names)
+      list(pvalues[go_names[go_names %in% names(pvalues)]])
+    }
+  })
+  return(graph)
+}
+
+#'@title wide_to_long
+wide_to_long_by_threshold <- function(distances, threshold){
+  row <- which(distances <= threshold) %% length(rownames(distances)) + 1
+  col <- ceiling((which(distances <= threshold) / length(rownames(distances))))
+  df <- data.frame(From = row, To = col)
+  df$From <- rownames(distances)[df$From]
+  df$To <- colnames(distances)[df$To]
+  return(df)
 }
 
 #'@title Construct a network of metabolites and GOs
@@ -305,7 +349,7 @@ get_gos_per_cluster <- function(g, pvalues){
     res <- res[!duplicated(res)]
     pvalues[names(pvalues) %in% res]
   })
-  V(g)$go <- lapply(V(g), function(node) gos_per_cluster[[V(g)[node]$cluster]])
+  V(g)$go <- lapply(1:length(V(g)), function(node) gos_per_cluster[[V(g)[node]$cluster]])
   return(g)
 }
 

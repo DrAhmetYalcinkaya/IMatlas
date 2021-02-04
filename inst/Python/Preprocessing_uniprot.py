@@ -121,9 +121,7 @@ class Uniprot:
         string_db = StringDB(self.options, self.log)
         string_db.get_stringdb_df()
         self.df["Gene ontology IDs"] = self.df["Gene ontology IDs"].str.split(";", expand = False)
-        go_series = self.df["Gene ontology IDs"].explode().str.lstrip()
+        go_series = self.df["Gene ontology IDs"].explode()
         indexes = go_series.iloc[np.where(go_series.isin(gos))].index      
         string_db.extract_protein_interactions(self.df, indexes)        
         return self.df.iloc[indexes]
-
-

@@ -5,7 +5,7 @@ setwd("~/GitHub/ImmuneMetAtlas/")
 usethis::use_description(fields = list("biocViews" = ""))
 usethis::use_mit_license("Pascal Maas")
 packages <- c("shiny", "igraph", "colourpicker", "httr", "dplyr", "viridis", "stringr",
-              "shinythemes", "shinycssloaders", "waiter", "AnnotationDbi",
+              "shinythemes", "shinycssloaders", "waiter", "AnnotationDbi", "pbapply",
               "shinydashboard", "htmlwidgets", "heatmaply", "DT", "yaml",
               "RColorBrewer", "shinyalert", "plotly", "shinyjs", "data.table", 
               "formattable", "gtools", "ggplot2", "GO.db", "plyr", "reticulate")
@@ -22,14 +22,15 @@ devtools::install_github(repo = "vanhasseltlab/ImmuneMetAtlas",
 
 
 setwd("~/GitHub/ImmuneMetAtlas/")
-devtools::load_all()
 devtools::install(upgrade = "never")
 
 library(ImmunoMet)
+load_data("config.yaml")
+
+plot(example_graph())
 
 run_textmining()
 run_preprocessing("config.yaml")
-load_data("config.yaml")
 
 
 
@@ -41,7 +42,9 @@ get_2d_scatter(g)
 
 get_metabolite_metadata(g, c("centrality", "id"))
 
+isolate(pp_confidence(700))
 plot(example_graph())
+
 to_plotly(example_graph())
 
 

@@ -23,6 +23,7 @@ observe_inputs <- function(){
         sapply(li_mode, function(x) updateSelectizeInput(session, x, selected = modes()))
         sel <<- ""
         choices(switch(input$mode, 
+                   "Identifiers" = c(meta_names$ID, prot_names$ID),
                    "Metabolites/Proteins" = to_select_names,
                    "Pathways" = sort(met_path$pathway),
                    "Classes" = sort(met_class$class),
@@ -60,7 +61,8 @@ generate_go_metabolite_df <- function(id){
 #'@param prot_file String name of the protein file
 #'@param full_load Boolean value for loading everything or just the protein-protein interaction file
 #'@importFrom plyr rbind.fill
-load_interaction_data <- function(prot_file="Protein-protein.csv", full_load = T){
+#'@importFrom dplyr filter
+load_interaction_data <- function(prot_file="Protein-protein.csv", confidence=0, full_load = T){
       if (full_load){
         
           ## Non-Indexed files
@@ -89,9 +91,11 @@ load_interaction_data <- function(prot_file="Protein-protein.csv", full_load = T
           #heatmap_df <<- read_file("heatmap_matrix.csv", "V1")
           #heatmap_df <<- heatmap_df[,-1]
       }
-    
   env$pp_interactions <- read_file(prot_file)
-  env$pm_interactions <- env$pm_interactions[which(env$pm_interactions$To %in% c(t(env$pp_interactions))),]
+  env$pp_interactions <- env$pp_interactions %>% dplyr::filter(Confidence > confidence)
+  if (prot_file == "Protein-protein.csv"){
+    env$pm_interactions <- env$pm_interactions[env$pm_interactions$To %in% env$protein_go_df$ID,]
+  }
   env$interactions <- rbind.fill(env$pp_interactions, env$mm_interactions, env$pm_interactions)
 }
 
@@ -233,10 +237,11 @@ data_filter <- function(filter, neighbours=0, max_neighbours=Inf, type = "Gene O
     if (search_mode == "Shortest Path"){
         data.selected <- get_shortest_path_graph(graph_from_data_frame(interactions), filter)
     } else if (type == "Gene Ontology"){
-        data.selected <- network_from_gos(filter)
+        data.selected <- network_from_gos(filter, neighbours = neighbours, max = max_neighbours)
     } else {
         search <- switch(search_mode, "Interacts" = "single", "Between" = "both")
         ids <- switch(type, 
+              "Identifiers" = filter,
               "Metabolites/Proteins" = convert_names_to_ids(filter),
               "Pathways" = get_ids_from_pathways(filter),
               "GO Simple" = convert_names_to_ids(filter),
@@ -244,9 +249,9 @@ data_filter <- function(filter, neighbours=0, max_neighbours=Inf, type = "Gene O
               "Classes" = get_ids_from_class(filter)
         )
         data.selected <- get_all_interactions(ids, mode = search)
+        data.selected <- get_n_neighbours(data.selected, n=neighbours, max=max_neighbours)
     }
     
-    data.selected <- get_n_neighbours(data.selected, n=neighbours, max=max_neighbours)
     data.selected <- lipid_filter(data.selected, omit_lipids)
     return(data.selected)
 }

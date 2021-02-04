@@ -77,6 +77,7 @@ class HMDB:
         """
         df = pd.DataFrame(self.mapping, columns = ["ID", "chebi_id"]).drop_duplicates()
         df.set_index("chebi_id", inplace=True, drop = False)
+        df.to_csv(f"{self.options['folder']}/Metabolite-chebi.csv", index = False)
         return df
 
     
