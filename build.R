@@ -25,6 +25,7 @@ setwd("~/GitHub/ImmuneMetAtlas/")
 devtools::install(upgrade = "never")
 
 library(ImmunoMet)
+
 load_data("config.yaml")
 
 plot(example_graph())

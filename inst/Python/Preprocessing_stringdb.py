@@ -31,13 +31,14 @@ class StringDB:
         This methods maps the dataframe obtained from StringDB to Uniprot 
         entries using the Uniprot dataframe.
         """
-        df["StringDB"] = df["StringDB"].str.rstrip(";")
         df.set_index("StringDB", inplace=True)
         self.string_df = self.string_df.loc[(self.in_df(df, "From")) & (self.in_df(df, "To"))]
-        self.string_df["From"] = list(df.loc[self.string_df["From"]]["Entry"])
-        self.string_df["To"] = list(df.loc[self.string_df["To"]]["Entry"])
+        self.string_df = pd.DataFrame(zip(df.loc[self.string_df["From"]]["Entry"], 
+                                          df.loc[self.string_df["To"]]["Entry"], 
+                                          self.string_df["Confidence"]), 
+                                          columns = ["From", "To", "Confidence"])
         self.log.write(f"Mapped {len(self.string_df.index)} interactions containing proteins to Uniprot identifiers\n")
-        return df
+        
     
     def in_df(self, df, column):
         """
@@ -46,12 +47,11 @@ class StringDB:
         """
         return self.string_df[column].isin(df.index)
 
-    def extract_protein_interactions(self, df, rows):
+    def extract_protein_interactions(self, df, ids):
         """
         This method extracts protein-protein interactions that 
         """
-        df = self.map_string_to_uniprot(df)
-        ids = list(df.iloc[rows]["Entry"])
+        self.map_string_to_uniprot(df)        
         rows = list(set(np.where(self.string_df["From"].isin(ids))[0]) & set(np.where(self.string_df["To"].isin(ids))[0]))
         self.log.write(f"Found {len(rows)} interactions between proteins of interest\n")
         self.string_df.iloc[rows].to_csv(f"{self.options['folder']}/Protein-protein.csv", index = False)

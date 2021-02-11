@@ -23,6 +23,7 @@ from Preprocessing_hmdb import HMDB
 from Preprocessing_go import GODB
 from Preprocessing_uniprot import Uniprot
 from Preprocessing_rhea import RheaDB
+from Preprocessing_stringdb import StringDB
 
 def main(config_path):
     """ 
@@ -44,19 +45,21 @@ def main(config_path):
     log = open(f"{options['folder']}/Log_preprocessing.txt", "w", buffering=1)
 
     hmdb_db = HMDB(options, log)
-    hmdb_db.parse_hmdb()
     rhea_db = RheaDB(options, log)
-    rhea_db.parse_rhea(hmdb_db.get_chebi_mapping())
-
     go_db = GODB(options, log)
-    gos = go_db.get_descendants()
-
     uniprot = Uniprot(options, log)
-    uniprot.retrieve_uniprot_df()
-    uniprot.map_transcripts_to_proteins()
-    uniprot.parse_metadata(hmdb_db.get_chebi_mapping())
-    df = uniprot.parse_protein_interactions(gos)
-    go_db.extract_gos(df) 
+    string_db = StringDB(options, log)
+
+    #hmdb_db.parse_hmdb()
+    #rhea_db.parse_rhea(hmdb_db.get_chebi_mapping())
+    gos = go_db.get_descendants()
+    df = uniprot.retrieve_uniprot_df()
+    entries = go_db.extract_gos(df) 
+
+    #uniprot.parse_metadata(hmdb_db.get_chebi_mapping())
+    df = uniprot.map_transcripts_to_proteins()
+    string_db.get_stringdb_df()
+    string_db.extract_protein_interactions(df, entries)  
     log.close()
 
 if __name__ == "__main__":

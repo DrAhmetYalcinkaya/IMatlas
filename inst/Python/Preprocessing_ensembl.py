@@ -37,22 +37,14 @@ class Ensembl:
             sleep(60)
             self.get_response(ids)
 
-    def set_transcripts(self, df):
-        """
 
-        """
-        df["Ensembl transcript"] = df["Ensembl transcript"].str.split("[",  expand = False)
-        df["Ensembl transcript"] = df["Ensembl transcript"].str[0].str.rstrip().str.rstrip(";")
-        df["Ensembl transcript"] = df["Ensembl transcript"].str.split(";", expand = False)
-        df = df.explode("Ensembl transcript")
-        self.transcripts = list(df["Ensembl transcript"])
-        return df
 
-    def get_transcript_mapping(self):
+    def get_transcript_mapping(self, df):
         """
 
         """
         print("Start mapping transcripts to Ensembl Proteins")
+        self.transcripts = list(df["Ensembl transcript"].str.findall(r'(ENST\d+)').explode().dropna())
         n = 1000
         with ThreadPoolExecutor() as ex:
             futures = [ex.submit(self.get_response, self.transcripts[i:i+n]) 
@@ -61,21 +53,20 @@ class Ensembl:
             for f in futures:
                 self.responses += f.result()
 
-        conv = pd.DataFrame(self.responses, columns = ["Ensembl transcript", "StringDB"])
-        conv.set_index("Ensembl transcript", inplace = True, drop = False)
+        conv = pd.DataFrame(self.responses, columns = ["Ensembl transcript", "StringDB"]).drop_duplicates()
         print("Completed mapping to Ensembl Proteins")
+        conv.to_csv(f"{self.options['folder']}/Ensembl_Mapping.csv", index = False)
         return conv
 
     def get_ensembl_proteins(self, df, mapping):
         """
 
         """
-        df.set_index("Ensembl transcript", inplace = True)
-        df = df.drop_duplicates()
-        df = df.loc[~df.index.duplicated()]
-        mapping = mapping.drop_duplicates()
-        indexes = mapping.index.intersection(df.index)
-        df = pd.concat([df.loc[indexes], mapping.loc[indexes]["StringDB"]], axis=1, sort=True)
+        df["Ensembl transcript"] = df["Ensembl transcript"].str.findall(r'(ENST\d+)')
+        df = df.dropna(subset = ["Ensembl transcript"]).explode("Ensembl transcript")
+        df = df.merge(mapping, on="Ensembl transcript")
+        df.drop("Ensembl transcript", axis = 1, inplace = True)
         df.reset_index(drop = True, inplace = True)
         self.log.write(f"Found {len(df.index)} proteins that were mapped to StringDB identifiers\n")
         return df
+       

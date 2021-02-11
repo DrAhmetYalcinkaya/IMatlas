@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from Preprocessing_ensembl import Ensembl
-from Preprocessing_stringdb import StringDB
+
 
 class Uniprot:
     """ 
@@ -26,19 +26,23 @@ class Uniprot:
         self.df = pd.read_csv("https://www.uniprot.org/uniprot/?query=*&format=tab&columns=id,protein%20names,comment(COFACTOR),ec,database(TCDB)," + \
         "go-id,database(Ensembl)&fil=organism:%22Homo%20sapiens%20(Human)%20[9606]%22%20AND%20reviewed:yes", sep="\t")
         self.log.write(f"Found {len(self.df.index)} proteins in the Uniprot database\n")
-        self.df = self.df.dropna(subset = ["Ensembl transcript"])
-        self.log.write(f"Found {len(self.df.index)} proteins with a known transcript\n")
-        self.df.reset_index(drop = True, inplace = True)
+        self.df.to_csv("uniprotdf.csv", index = False)
+        return self.df
+        
 
     def map_transcripts_to_proteins(self):
         """
         Here, using the Ensembl class, transcripts in the Uniprot dataframe are mapped 
         to Ensembl proteins for usage in StringDB protein-protein interactions. 
         """
+        self.df = self.df.dropna(subset = ["Ensembl transcript"])
+        self.log.write(f"Found {len(self.df.index)} proteins with a known transcript\n")
+        self.df.reset_index(drop = True, inplace = True)
         ensembl_db = Ensembl(self.options, self.log)
-        self.df = ensembl_db.set_transcripts(self.df)
-        mapping = ensembl_db.get_transcript_mapping()
-        self.df = ensembl_db.get_ensembl_proteins(self.df, mapping)
+        mapping = ensembl_db.get_transcript_mapping(self.df)
+        #mapping = pd.read_csv(f"{self.options['folder']}/Ensembl_Mapping.csv")
+        self.df = ensembl_db.get_ensembl_proteins(self.df, mapping)      
+        return self.df
 
     def parse_metadata(self, chebi_mapping):
         """
@@ -69,8 +73,8 @@ class Uniprot:
         This method extracts protein names from Uniprot.
         """
         df = self.df[["Entry", "Protein names"]]
-        names = df["Protein names"].str.split("(", expand = False).str[0]
-        synonyms = df["Protein names"].str.split("(", expand = False).str[1].str.rstrip(") ")
+        names = df["Protein names"].str.split("(").map(lambda x: x[0])
+        synonyms = df["Protein names"].str.split("(").map(lambda x: x[-1]).str.rstrip(")")
         synonyms[synonyms.isnull()] = names[synonyms.isnull()]
         df = pd.concat([df["Entry"], names, synonyms], axis = 1)
         df.columns = ["ID", "Name", "Synonym"]
@@ -111,17 +115,4 @@ class Uniprot:
         df.dropna(subset=["Cofactor"], inplace=True)
         df.to_csv(f"{self.options['folder']}/Cofactors.csv", index = False)
         self.log.write(f"Found {len(df.index)} protein-metabolite cofactors combinations\n")
-
-    def parse_protein_interactions(self, gos):
-        """
-        Here, the StringDB class is used to obtain a StringDB interactions dataframe
-        and extracts proteins that are associated with Gene Ontologies that are 
-        descendants of the original provided Gene Ontology.
-        """
-        string_db = StringDB(self.options, self.log)
-        string_db.get_stringdb_df()
-        self.df["Gene ontology IDs"] = self.df["Gene ontology IDs"].str.split(";", expand = False)
-        go_series = self.df["Gene ontology IDs"].explode()
-        indexes = go_series.iloc[np.where(go_series.isin(gos))].index      
-        string_db.extract_protein_interactions(self.df, indexes)        
-        return self.df.iloc[indexes]
+              

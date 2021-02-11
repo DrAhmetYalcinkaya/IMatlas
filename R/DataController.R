@@ -34,10 +34,12 @@ observe_inputs <- function(){
     })
 }
 
+#'@title Generate GO-Metabolite dataframe 
+#'@importFrom pbapply pblapply
 generate_go_metabolite_df <- function(id){
   offspring <- as.list(GO.db::GOBPOFFSPRING)
   ids <- c(offspring[[id]], id)
-  return(do.call(rbind, lapply(ids, function(x){
+  return(do.call(rbind, pblapply(ids, cl=8, function(x){
     g <- get_graph(get_go_names(x), simple = T)
     if (typeof(g) == 'list'){
       g <- add_node_types(g)
