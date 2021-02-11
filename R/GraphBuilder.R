@@ -330,7 +330,7 @@ calculate_pvalues <- function(g){
   vec <- p.adjust(sapply(names(ids), simplify = F, USE.NAMES = T, function(id){
     return(fishers_test(id, ids, all_go))
   }))
-  vec <- vec[vec < 0.05]
+  #vec <- vec[vec < 0.05]
   names(vec) <- get_go_names(names(vec))
   return(vec)
 }

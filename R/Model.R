@@ -99,6 +99,9 @@ get_metabolite_ids <- function(metabolite_names){
 #')
 #'@param go_ids Vector of Gene Ontology IDs
 get_go_names <- function(go_ids){
+    if (is.null(go_ids)){
+      return(NA)
+    }
     go_name_df <- change_index(go_name_df, "GOID")
     return(as.vector(go_name_df[go_ids,]$Name))
 }
