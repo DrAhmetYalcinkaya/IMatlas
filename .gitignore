@@ -5,4 +5,3 @@ README.rmd
 .Rproj.user
 NonPackageCode
 build.r
-*.pyc

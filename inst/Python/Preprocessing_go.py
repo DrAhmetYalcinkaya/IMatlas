@@ -29,7 +29,7 @@ class GODB:
         self.log.write(f"Number of descendants: {len(desc)}\n")
         print("Gathered Gene Ontologies")
         desc = [a.strip() for a in desc]
-        self.gos = desc + [self.go_id.strip()]
+        self.gos = desc + [self.go_id]
         return self.gos
 
     def get_go_names(self):
@@ -37,7 +37,7 @@ class GODB:
         This method returns a dictionary of an ID and its name using the api of EBI.
         """
         total = []
-        n = 50
+        n = 100
         for i in range(0, len(self.gos), n):
             url = "https://www.ebi.ac.uk/QuickGO/services/ontology/go/terms/{}".format(",".join(self.gos[i:i+n])) 
             with requests.get(url) as req:
@@ -53,14 +53,13 @@ class GODB:
         dictionary that contains a mapping between a ID and its ancestors
         """
         total = {}
-        n = 50
+        n = 100
         for i in range(0, len(self.gos), n):
             url = "https://www.ebi.ac.uk/QuickGO/services/ontology/go/terms/{}/ancestors".format(",".join(self.gos[i:i+n]))
             res = dict(json.loads(requests.get(url).content))["results"]
             for r in res:
                 if "ancestors" in r.keys():
-                    id = r["id"].strip()
-                    total[id] = [ances.strip() for ances in r["ancestors"] if ances.strip() in self.gos] + [id]
+                    total[r["id"]] = [ances for ances in r["ancestors"] if ances in self.gos] + [r["id"]]
         return total
 
     
@@ -71,21 +70,16 @@ class GODB:
         ancestors of the given term. This is due to the hierarchial
         nature of Gene Ontology.
         """
-        go_series = df["Gene ontology IDs"].str.findall(r"(GO:\d+)").explode()
-        indexes = go_series.iloc[np.where(go_series.isin(self.gos))].index      
-        df = df.iloc[indexes]
-
         ancestors = self.get_ancestors()
-
-        df["Gene ontology IDs"] = df["Gene ontology IDs"].str.findall(r"(GO:\d+)")
-        to_loop = df[["Entry", "Gene ontology IDs"]].explode("Gene ontology IDs")
         tot = []
-        for entry, go in zip(to_loop["Entry"], to_loop["Gene ontology IDs"]):
-            for i in ancestors.get(go, []):
+        for entry, gos in zip(df["Entry"], df["Gene ontology IDs"]):
+            all = []
+            for go in gos:
+                all += ancestors.get(go.strip(), [])
+            for i in set(all):
                 tot.append([entry, i])
 
         prot_gos = pd.DataFrame(tot, columns = ["ID", "GOID"])
-        prot_gos.drop_duplicates().to_csv(f"{self.options['folder']}/Protein_gos.csv", index = False)
+        prot_gos.to_csv(f"{self.options['folder']}/Protein_gos.csv", index = False)
         pd.DataFrame(self.get_go_names(), columns = ["GOID", "Name"]).to_csv(f"{self.options['folder']}/Go_names.csv", index = False)
         print("Done Gene Ontologies")
-        return list(df["Entry"].drop_duplicates())
