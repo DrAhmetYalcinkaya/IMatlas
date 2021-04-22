@@ -29,7 +29,7 @@ class GODB:
         self.log.write(f"Number of descendants: {len(desc)}\n")
         print("Gathered Gene Ontologies")
         desc = [a.strip() for a in desc]
-        self.gos = desc + [self.go_id]
+        self.gos = desc + [self.go_id.strip()]
         return self.gos
 
     def get_go_names(self):
@@ -59,7 +59,7 @@ class GODB:
             res = dict(json.loads(requests.get(url).content))["results"]
             for r in res:
                 if "ancestors" in r.keys():
-                    total[r["id"]] = [ances for ances in r["ancestors"] if ances in self.gos] + [r["id"]]
+                    total[r["id"]] = [ances.strip() for ances in r["ancestors"] if ances.strip() in self.gos] + [r["id"].strip()]
         return total
 
     
@@ -72,6 +72,7 @@ class GODB:
         """
         ancestors = self.get_ancestors()
         tot = []
+        print(df)
         for entry, gos in zip(df["Entry"], df["Gene ontology IDs"]):
             all = []
             for go in gos:
@@ -79,7 +80,7 @@ class GODB:
             for i in set(all):
                 tot.append([entry, i])
 
-        prot_gos = pd.DataFrame(tot, columns = ["ID", "GOID"])
+        prot_gos = pd.DataFrame(tot, columns = ["ID", "GOID"]).drop_duplicated()
         prot_gos.to_csv(f"{self.options['folder']}/Protein_gos.csv", index = False)
         pd.DataFrame(self.get_go_names(), columns = ["GOID", "Name"]).to_csv(f"{self.options['folder']}/Go_names.csv", index = False)
         print("Done Gene Ontologies")

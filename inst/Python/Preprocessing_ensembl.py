@@ -41,9 +41,8 @@ class Ensembl:
         """
 
         """
-        df["Ensembl transcript"] = df["Ensembl transcript"].str.split("[",  expand = False)
-        df["Ensembl transcript"] = df["Ensembl transcript"].str[0].str.rstrip().str.rstrip(";")
-        df["Ensembl transcript"] = df["Ensembl transcript"].str.split(";", expand = False)
+        df["Ensembl transcript"] = df["Ensembl transcript"].str.findall(r'(ENST\d+)')
+
         df = df.explode("Ensembl transcript")
         self.transcripts = list(df["Ensembl transcript"])
         return df

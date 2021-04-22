@@ -6,6 +6,7 @@
 #' @param suffix The suffix is used to create unique objects. This suffix is based on the page they're
 #'               located. The main page has an empty suffix, while the rest has "-Heatmap" as suffix for example
 #' @return A fluidRow made for placement below the header_row in the visualization pages.
+#'@noRd
 ui.top_row <- function(suffix){
   return(fluidRow(id="search-row",
                   column(1),
@@ -25,11 +26,13 @@ ui.top_row <- function(suffix){
 #' @param title Title of the page
 #' @param subtitle subtitle of the page
 #' @return A fluidRow meant for each header of the page.
+#'@noRd
 header_row <- function(title, subtitle){
   return(fluidRow(column(1), column(8, div(h2(strong(title)), h5(subtitle), hr()))))
 }
 
 #' @title Make Sidebar UI
+#'@noRd
 side_bar_menu <- function(){
     sidebarMenu(id = "tabs",
         menuItem("Dashboard", tabName = "home", icon = icon("home")),
@@ -57,6 +60,7 @@ side_bar_menu <- function(){
 #' @importFrom waiter use_waiter
 #' @importFrom plotly plotlyOutput
 #' @importFrom DT dataTableOutput
+#'@noRd
 ui <- function(){
   version <- "2.0"
   dashboardPage(title = paste0("Immuno-Metabolome Atlas ", version),
@@ -97,15 +101,20 @@ ui <- function(){
                                                        div(style = "width: 84vw; display: flex;",
                                                            column(6, plotlyOutput("barplot_centrality", height = "70vh") %>% withSpinner(4, color = "#0dc5c1")),
                                                            column(6, plotlyOutput("barplot_gos", height = "70vh") %>% withSpinner(4, color = "#0dc5c1"))),
-                                                       div(style = "width: 84vw; display: flex;",
-                                                           column(6, plotlyOutput("scatter_plot", height = "70vh") %>% withSpinner(4, color = "#0dc5c1"))
-                                                       )),
+                                                       #div(style = "width: 84vw; display: flex;",
+                                                       #    column(6, plotlyOutput("scatter_plot", height = "70vh") %>% withSpinner(4, color = "#0dc5c1"))
+                                                       #)
+                                                       ),
+                                            
                                               tabPanel("Network", div(style = "width: 84vw;", plotlyOutput("graph", height = "100vh") %>% withSpinner(4, color = "#0dc5c1"))),
                                               tabPanel("Heatmap", div(style = "width: 80vw; height: 90vh; margin-top: 1%;", plotlyOutput("heatmapplot", height = "70vh") %>% withSpinner(4, color = "#0dc5c1"))),
                                               tabPanel("Data", 
                                                        tabsetPanel(type = "pills",
-                                                                   tabPanel("Nodes", column(10, div(style = "margin-top: 2%; background-color:white;", DT::dataTableOutput("datatable_nodes")))),
-                                                                   tabPanel("Interactions", column(10, div(style = "margin-top: 2%; background-color:white;", DT::dataTableOutput("datatable_edges"))))))
+                                                                   tabPanel("Proteins/Metabolites", column(10, div(style = "margin-top: 2%; background-color:white;", DT::dataTableOutput("datatable_nodes")))),
+                                                                   tabPanel("Interactions", column(10, div(style = "margin-top: 2%; background-color:white;", DT::dataTableOutput("datatable_edges")))),
+                                                                   tabPanel("Processes", column(10, div(style = "margin-top: 2%; background-color:white;", DT::dataTableOutput("datatable_processes"))))
+                                                                   ) 
+                                                       )
                                               
                                               
                                   )

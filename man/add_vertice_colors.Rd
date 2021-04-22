@@ -5,7 +5,7 @@
 \title{Adding colors to vertices of the graph}
 \usage{
 add_vertice_colors(
-   g,
+   graph,
    mets
 )
 }

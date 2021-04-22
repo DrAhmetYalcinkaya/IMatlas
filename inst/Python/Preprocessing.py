@@ -11,7 +11,8 @@ def import_or_install(packages):
 
 packages = {"yaml": "pyYaml", "pandas": "pandas", "numpy": "numpy", "zipfile": "zipfile",
     "json": "json", "gzip": "gzip", "requests": "requests", "pathlib": "pathlib",
-    "xml": "xml", "re": "re", "concurrent": "concurrent", "io": "io", "itertools": "itertools"
+    "xml": "xml", "re": "re", "concurrent": "concurrent", "io": "io", "itertools": "itertools",
+    "python-igraph": "python-igraph", "leidenalg": "leidenalg"
 }
 import_or_install(packages)
 

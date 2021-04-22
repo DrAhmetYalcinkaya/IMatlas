@@ -21,17 +21,35 @@ from concurrent.futures import ThreadPoolExecutor
 import sys
 from pathlib import Path
 
+from tqdm import tqdm 
+
+
 class TextMining:
     """
     This class handles all text mining related searches. 
     """
-    def __init__(self, options, log):
+    def __init__(self, options, log, type=""):
         self.options = options
         self.log = log
+        self.type = type
         self.processed = 0
         self.total = 0
+        self.prefix = {
+            "Metabolite": lambda x: f'CHEBITERM:"{x}"',
+            "GO": lambda x: f'GOTERM:"{x}"'
+        }
+        self.papers = 0
 
-    def request_query(self, search, size, cursor):
+    def query_builder(self, search, cursor="*"):
+        base = "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
+        query = '(ABSTRACT:"{0}" OR RESULTS:"{0}" OR METHODS:"{0}" OR TABLE:"{0}" OR SUPPL:"{0}" OR FIG:"{0}")'.format(search)
+        query = f'{query} AND {self.prefix.get(self.type, lambda x: x)(search)} AND PUB_TYPE:"Journal Article" AND SRC:"MED" AND ORGANISM:"HUMAN"'
+        meta = f'synonym=true&resultType=idlist&pageSize=1000&cursorMark={cursor}&format=json'
+        url = f'{base}?query={query}&{meta}' 
+        return url     
+        
+
+    def request_query(self, search, cursor):
         """
         Here are queries for a term determined. The fields in which to search are:
         Abstract, Methods, Results, Tables, Figures and Supplements. Other than that,
@@ -39,14 +57,10 @@ class TextMining:
         to human-related studies. Lastly, the paper must be of the type 'research article'.
         This query has been made with the query builder of EuropePMC.
         """
-        #query = '(ABSTRACT:"{0}" OR RESULTS:"{0}" OR METHODS:"{0}" OR TABLE:"{0}" OR SUPPL:"{0}" OR FIG:"{0}")'.format(search)
-        base = "https://www.ebi.ac.uk/europepmc/webservices/rest/"
-        query = '"%s" AND ("patient" OR "human") AND PUB_TYPE:"Journal Article AND (SRC:"MED")"'.format(search)
-        url = f'{base}search?query={query}&synonym=true&resultType=idlist&pageSize={size}&cursorMark={cursor}&format=json'      
-        print("Current progress: %.2f%%" % ((self.processed + 1) / self.total * 100), end = "\r")  
+        url = self.query_builder(search, cursor)
         return json.loads(requests.get(url).content)
 
-    def search(self, term, n):
+    def search(self, term):
         """
         This method performs the search for a single term. Since results are paginated 
         and limited to 1000 results per page, a while-true construction has been made 
@@ -55,19 +69,19 @@ class TextMining:
         """
         ids = []
         cursor = "*"
-        res = ""
-        try:
-            while True:
-                res = self.request_query(term, 1000, cursor)
+        while True:
+            try:
+                res = self.request_query(term, cursor)
                 hitcount = int(res["hitCount"])
                 ids += [result["id"] for result in res["resultList"]["result"]]
                 if hitcount == 0 or cursor == res["nextCursorMark"]:
+                    self.papers += hitcount
                     break
+
                 cursor = res["nextCursorMark"] 
-
-        except Exception:
-            time.sleep(5)
-
+            except:
+                pass
+            
         self.processed += 1
         return ids
 
@@ -77,26 +91,27 @@ class TextMining:
         Returns a dictionary containing a term - pubmed identifiers construction.
         """
 
-        prefix = {
-            "Metabolite": "CHEBITERM:",
-            "GO": "GOTERM:"
-        }
-
         dic = {}
+        self.type = type
         self.processed = 0
+        self.papers = 0
         self.total = len(list_of_terms)
-        with ThreadPoolExecutor() as ex:
-            futures = [ex.submit(self.search, prefix[type] + term, n) 
-                        for n, term in enumerate(list_of_terms)]
-            for i, f in enumerate(futures):
-                ids = f.result()
-                    
-                if len(ids) > 0:
-                    term = list_of_terms[i]
-                    dic[term] = ids
-            
-        print()
+        with tqdm(total = self.total) as pbar:
+            with ThreadPoolExecutor(max_workers=10) as ex:
+                futures = [ex.submit(self.search, term) for term in list_of_terms]
+
+                for i, f in enumerate(futures):
+                    ids = f.result()
+                        
+                    if len(ids) > 0:
+                        term = list_of_terms[i]
+                        dic[term] = ids
+                    pbar.update(1)
         return dic
+
+    def can_be_found(self, terms, type):
+        self.type = type
+        return sum([int(self.request_query(term, "*")["hitCount"]) > 0 for term in terms])
 
 
 class EBI:
@@ -149,7 +164,6 @@ class EBI:
         to_search = [names_id[x] for x in set(to_search)]
         for i in range(0, len(to_search), self.n):
             params = ",".join(to_search[i : i + self.n])
-            print(params)
             for r in self.get_request(params, endpoint = "ancestors"):
                 key = id_names[r["id"]]
                 total[key] = [id_names[ances] for ances in r["ancestors"] if ances in allowed] + [key]
@@ -173,6 +187,7 @@ def get_expanded_df(ebi, df, options):
     go_df = pd.read_csv(f"{options['folder']}/Go_names.csv")
     gos = list(go_df["GOID"])
     names = list(go_df["Name"])
+    
     ancestors = ebi.get_ancestors(list(df["Gene Ontology"]), gos, names)
     df["Ancestors"] = ["\t".join(ancestors[go]) for go in df["Gene Ontology"]]
 
@@ -211,31 +226,56 @@ def main(config_path):
     with open(config_path) as file: 
         options = yaml.load(file, Loader=yaml.FullLoader)
         Path(options["folder"]).mkdir(parents=True, exist_ok=True)
-    print("Opened Config file.")
     log = open(f"{options['folder']}/Log_textmining.txt", "w", buffering=1)
 
     text_mining = TextMining(options, log)
     ebi = EBI(options, log)
-
     
     gos = list(set(pd.read_csv(f"{options['folder']}/Go_names.csv")["Name"]))
     mets = list(set(pd.read_csv(f"{options['folder']}/Metabolite_name.csv")["name"]))
-    df = find_overlap(text_mining.search_all(gos, type = "GO"), 
-                      text_mining.search_all(mets, type = "Metabolite"))
+    gos = text_mining.search_all(gos, type = "GO")
+    #with open("gos.json", "w") as outfile: 
+    #    json.dump(gos, outfile) 
+    mets = text_mining.search_all(mets, type = "Metabolite")
+    #with open("mets.json", "w") as outfile: 
+    #    json.dump(mets, outfile)
+    #gos = json.load(open("gos.json"))
+    #mets = json.load(open("mets.json"))
+
+    df = find_overlap(mets, gos)
     df = get_expanded_df(ebi, df, options)
-
-    df.to_csv(f"textmining_all.tsv", sep="\t", index = False)
-
-    #for prefix in ["raw", "expanded"]:
-    #    write_counts(df, ["Paper ID"], prefix, "papers")
-    #    write_counts(df, ["Metabolite"], prefix, "metabolites")
-    #    write_counts(df, ["Gene Ontology"], prefix, "go")
-    #    write_counts(df, ["Gene Ontology", "Metabolite"], prefix, "counts")
-    #    if prefix == "raw":
-    #df.to_csv(f"extended_textmining_all.tsv", sep="\t", index = False)
+    df.to_csv(f"{options['folder']}/textmining_all.tsv", sep="\t", index = False)
 
 if __name__ == "__main__":
     config_path = "config.yaml"
     if len(sys.argv) > 1:
         config_path = sys.argv[1].lstrip("'").rstrip("'").lstrip('"').rstrip('"')
     main(config_path)
+    """
+    with open(config_path) as file: 
+        options = yaml.load(file, Loader=yaml.FullLoader)
+        Path(options["folder"]).mkdir(parents=True, exist_ok=True)
+    print("Opened Config file.")
+    log = open(f"{options['folder']}/Log_textmining.txt", "w", buffering=1)
+    text_mining = TextMining(options, log)
+    bacs = [
+        "Streptococcus pneumoniae",
+        "Haemophilus influenzae",
+        "Legionella pneumophila",
+        "Coxiella burnetti",
+        "Staphylococcus aureus",
+        "influenza virus"
+    ]
+    bacteria = text_mining.search_all(bacs, type = "Bacteria")
+    with open("bacteria.json", "w") as outfile: 
+        json.dump(bacteria, outfile)
+    
+    bacteria = json.load(open("bacteria.json"))
+    gos = json.load(open("gos.json"))
+    df = find_overlap(bacteria, gos).drop_duplicates()
+
+    ebi = EBI(options, log)
+    df = get_expanded_df(ebi, df, options).drop_duplicates()
+    df.columns = ["Gene Ontology", "Bacteria", "Paper ID"]
+    df.to_csv(f"textmining_bacteria.tsv", sep="\t", index = False)
+    """

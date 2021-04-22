@@ -80,6 +80,18 @@ class HMDB:
         df.to_csv(f"{self.options['folder']}/Metabolite-chebi.csv", index = False)
         return df
 
+    def is_drug(self, chunk, terms):
+        name = chunk.findtext('name')
+        iupac = chunk.findtext("traditional_iupac")
+        try:
+            return any([
+                "is only found in individuals that have used or taken" in chunk.findtext("description"),
+                "Naturally occurring process" not in terms and "Drug" in terms,
+                re.search(f".*({name}|{re.escape(iupac)}).*(Action|Metabolism) Pathway".lower(), "".join(terms).lower())
+            ])
+        except:
+            return False
+
     
     def parse_hmdb(self): 
         """
@@ -93,14 +105,14 @@ class HMDB:
         with z.open("hmdb_metabolites.xml", "r") as source:
             self.set_variables(source = z, chunk_by = "metabolite", 
                         fields = ["accession", "chebi_id", "uniprot_id", 
-                                  "class", "kegg_map_id", "super_class", 
+                                  "class", "kegg_map_id", "super_class", "description", "traditional_iupac",
                                   "biospecimen", "cellular", "name", "pathway", "term"],
-                        exclude = ["term", "kegg_map_id", "chebi_id"])
+                        exclude = ["term", "kegg_map_id", "chebi_id", "description", "traditional_iupac"])
 
             for n, chunk in enumerate(self.chunk()):
                 print(n, end="\r")
                 terms = {x.text for x in chunk.findall("term")}
-                if "Biological role" in terms or "Naturally occurring process" in terms:
+                if ("Biological role" in terms or "Naturally occurring process" in terms) and not self.is_drug(chunk, terms):
                     count += self.process_metabolite(chunk)
             self.close()  
             self.log.write(f"Extracted {count} metabolites out of {n} from HMDB\n")

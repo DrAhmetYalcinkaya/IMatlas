@@ -1,5 +1,6 @@
 ---
 title: "Immuno Metabolome Atlas"
+always_allow_html: true
 output:
   github_document:
     df_print: kable
@@ -7,102 +8,118 @@ output:
 
 ```{r, echo=F, warning=FALSE, message = FALSE}
 options(warn=-1)
-library(ImmunoMet, warn.conflicts=FALSE, quietly = TRUE)
+library(ImmunoMet)
 load_data("C:/Users/Pascal/Documents/ImmuneMetAtlas/App/config.yaml", neighbours = 0)
 ```
 
 
-# Introduction
-This package is part of our publication called "Immuno metabolome atlas". 
+## Introduction
+This R package is part of our publication called "Immuno metabolome atlas". It is able to construct immune system-related protein-metabolite interaction networks. The package features an RShiny application, but also a set of tools for constructing graphs and identifying important biological processes.  
 
-# Installation
-
-##  Python
-
-Dependencies needed:
-
-- Pandas
-- Numpy
-
-The script will attempt to install these if they cannot be imported. 
-
-
-## R
-Use the `devtools` to install our package and dependencies.
+## Installation
+Use the `devtools` package to install our package and dependencies. 
 
 ``` {r eval=FALSE}
 install.packages("devtools")
 devtools::install_github("vanhasseltlab/ImmuneMetAtlas")
 ```
 
-# Getting Started
+## Getting Started
 
-## Setting up the configuration file
-To link the Python and R scripts, a YAML (Yet Another Markdown Language) configuration file is used, called `config.yaml`. This file needs to contain at least the follwing fields:
+### Setting up the configuration file
+To link the Python and R scripts, a configuration file is used, called `config.yaml`. This file needs to contain the following fields:
 
 - folder: Path where data files are going to be stored
+- relative_path: True/False. Is the folder given relative to the working directory?
 - GO_ID: Gene Ontology identifier of which all offspring terms are used as a filter
 
+By default, the following settings are used.
+```
+folder: Data
+relative_path: True
+GO_ID: GO:0002376
+```
 
-## Preprocessing data
-Before using this package, you will need to obtain data using our Python scripts. These are located in the Python folder and only have to be executed once. Preprocessing is done by running the following code:
+### Preprocessing data
+Before using this package, you will need to obtain data using our Python scripts. These are located in the Python folder and only have to be executed once. The scripts will download and extract all data to the given folder in the configuration file. Preprocessing is done by running the following code:
 
 ```{r eval=FALSE}
 library(ImmunoMet)
-path <- "config.yaml"
-run_preprocessing(path)
+run_preprocessing("path/to/config.yaml")
 ```
 
-The scripts will download and extract all data to the given folder in the configuration file. 
+### Start the RShiny app
 
-## Start the RShiny app
 
 ``` {r eval=FALSE}
 library(ImmunoMet)
-load_data(config = "config.yaml")
+load_data(config = "path/to/config.yaml")
 run_shiny()
 ```
 
-## Non-Shiny usages
+### Non-Shiny usages
 
 Example, static graph
 ``` {r eval=FALSE}
 library(ImmunoMet)
-load_data(config = "config.yaml")
+load_data(config = "path/to/config.yaml")
 graph <- example_graph()
 plot(graph)
 ```
 
-```{r results='hide', fig.height=6, echo=F, fig.align='center'}
+```{r results='hide', fig.height = 8, fig.width=12, echo=F, fig.align='center'}
 graph <- example_graph()
 plot(graph)
 ```
 
-Interactive plotly graph in browser
+To get a similar interactive graph as in the Shiny app, you can convert the graph to a Plotly object.
 
-``` {r eval=FALSE}
+```{r, echo=FALSE, warning=F, message=FALSE, error=F}
+library(igraph, quietly = T, verbose = F)
+V(graph)$size <- V(graph)$size * 0.3
+```
+
+``` {r, fig.width = 12}
 to_plotly(graph)
 ```
 
 
 
-Basically `get_graph()` is the main function for obtaining a graph-structure representing your search. It takes the parameters `filter`, `type`, `search_mode`, `neighbours`, `max_neighbours` and `simple`. See the documentation within the R package for full explanation and examples of these parameters.
+### Advanced usages
 
-```{r eval=FALSE}
-graph <- get_graph(filter = "microglial cell activation", type = "Gene Ontology")
-plot(graph)
+To function `get_graph()` is the main function for obtaining a graph-structure representing your search. It takes the following parameters, see the documentation for additional descriptions and examples.
+```{r echo=FALSE}
+data.frame(Argument = c("filter", "neighbours", "max_neighbours", "simple", "omit_lipids", "type", "search_mode", "verbose"), Default = c(NA, 0, Inf, FALSE, FALSE, "Gene Ontology", "Interacts", TRUE), Description = c("The search term for building the graph. Cannot be empty.", "Integer value representing the number of neighbours (steps) to be found.", "Maximum number of edges a node allowed. Can be used to remove super hubs e.g. Water or ATP.", "Returns a barebone igraph object with only identifiers and names. Useful when only the graph structure is needed.", "Removes any metabolite with the superclass 'Lipids and lipid-like molecules'.", "Type of the search filter. Can be one of the following: `Gene Ontology`, `Metabolite/Proteins`, `Pathways`, `GO Simple`, `Superclasses`, `Classes`.", "Determines how interactions are found. `Interacts` (default) will find all possible interactions, while `Between` will only find interactions between the given metabolites / proteins. `Shortest Path` will find the shortest route between the metabolites / proteins given, including indirect interactions.", "If `TRUE` prints a small summary of the graph including the number of metabolites / proteins and interactions."))
+```
+
+If the argument `simple = FALSE` (default), metadata is included in the returned igraph object. This includes the following:
+
+```{r, echo=FALSE}
+data.frame(Name = c("id", "name", "closeness", "go", "type", "color", "enzyme", "cofactor", "confidence"), Description = c("Identifier of the protein or metabolite.", "Full name of the protein or metabolite.", "Harmonic closeness score of the node. Indicates its importance in the graph.", "Gene Ontologies associated to the node.", "Type of the node, can be either `Metabolite`, `Protein`, `Enzyme` or `Transporter`.", "Color of the node", "Enzyme code if the node is an enzyme.", "Metabolite ID that functions as a cofactor to the protein.", "Confidence (0-1000) of the interaction. Only for protein-protein interactions this number is representive. All other interactions have a confidence score of 1000."))
+```
+
+However, when `simple = TRUE`, only the `id`, `name`, and `confidence` are stored. Several helpers functions exist that can be chained to obtain metadata. These have support for the `dplyr` pipe notation. A complete example that mimics the `example_graph()` function is showed below. However, optional helper functions exist, as mentioned in the table below the example.
+
+```{r, eval=FALSE}
+graph <- get_graph("microglial cell activation", simple = TRUE) %>%
+  add_closeness() %>%
+  add_gos() %>%
+  add_metadata() %>%
+  add_node_types() %>%
+  add_vertice_colors() %>%
+  add_layout()
 ```
 
 
-
-
-Obtain p-values of metabolite - GO associations in a long dataframe format:
-``` {r}
-head(get_metabolite_go_pvalues(graph))
+```{r, echo=FALSE}
+df <- data.frame(Name = c("`add_closeness`", "`add_gos`", "`add_metadata`", "`add_node_types`", "`add_vertice_colors`", "`add_layout`", "`add_communities`", "`remove_unconnected`", "`metabolite_go_graph`"), Description = c("Calculates the Harmonic Closeness per node to determine it's importance in the graph", "Calculates p-values for each Gene Ontology present in the current graph", "Adds vertice metadata about enzymes, pathways, and (super)classes", "Adds types about each node",  "Adds colors to each type of node and edge.", "Calculates a Fruchterman-Reingold layout so each node is placed visually pleasing.", "Uses the Leiden algorithm to identify communities within the current graph.", "Removes any node that has no interaction with other nodes.", "Convert the graph to a graph where Gene Ontologies are represented by nodes. Requires `add_gos` to be run first."))
+knitr::kable(df, caption = "Helper functions for chaining calculations and (meta)data")
 ```
 
-When you only need the graph structure, use `simple = TRUE`. This is especially handy when constructing a lot of graphs. Note that only the bare minimum data is stored. 
-
-``` {r}
-get_graph(filter = "microglial cell activation", type = "Gene Ontology", simple = TRUE)
+### Summarize results
+Display an overview of biological processes and importances per metabolite. Sorts by p-value (ascending) and closeness (descending). A threshold for both the p-value and closeness can be given.
+``` {r, message = FALSE}
+example_graph() %>%
+  metabolic_process_summary(pvalue = 0.05, closeness = 0.5) %>%
+  head(10)
 ```

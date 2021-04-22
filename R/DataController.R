@@ -4,6 +4,7 @@
 #'@usage  observe_inputs()
 #'@examples
 #'observe_inputs()
+#'@noRd
 observe_inputs <- function(){
     li_filter <- list("home" = "filter", "data" = "filterData", "network" = "filterGraph")
     li_mode <- list("home" = "mode", "data" = "modeData", "network" = "modeGraph")
@@ -34,23 +35,6 @@ observe_inputs <- function(){
     })
 }
 
-generate_go_metabolite_df <- function(id){
-  offspring <- as.list(GO.db::GOBPOFFSPRING)
-  ids <- c(offspring[[id]], id)
-  return(do.call(rbind, lapply(ids, function(x){
-    g <- get_graph(get_go_names(x), simple = T)
-    if (typeof(g) == 'list'){
-      g <- add_node_types(g)
-      V(g)$centrality <- round(harmonized_closeness(g), 3)
-      df <- get.data.frame(g, "vertices") %>%
-        dplyr::filter(type == "Metabolite") %>%
-        dplyr::select("centrality")
-      if (nrow(df) > 0) data.frame(GO = x, Metabolite = rownames(df), Centrality = df$centrality)
-    }
-    
-  })))
-}
-
 #'@title Load interaction data
 #'@usage load_interaction_data(
 #'    options,
@@ -62,41 +46,46 @@ generate_go_metabolite_df <- function(id){
 #'@param full_load Boolean value for loading everything or just the protein-protein interaction file
 #'@importFrom plyr rbind.fill
 #'@importFrom dplyr filter
+#'@noRd
 load_interaction_data <- function(prot_file="Protein-protein.csv", confidence=0, full_load = T){
       if (full_load){
         
           ## Non-Indexed files
-          env$protein_go_df <- read_file("Protein_gos.csv")
-          
-          env$protein_go_df <- unique(env$protein_go_df)
-          env$prot_names <- read_file("Protein_names.csv")
+          env$protein_go_df <- read_file("Protein_gos.csv", "ID")
           env$mm_interactions <- read_file("Metabolite-metabolite.csv")
+          
+          env$mm_interactions <- env$mm_interactions[, Confidence := 1000]
           env$pm_interactions <- read_file("Metabolite_uniprot_id.csv")
           colnames(env$pm_interactions) <- c("From", "To")
+          env$pm_interactions <- env$pm_interactions[, Confidence := 1000]
           
-          env$met_biospecimen <- read_file("Metabolite_biospecimen.csv")
-          env$met_cellular <- read_file("Metabolite_cellular.csv")
-          env$met_path <- read_file("Metabolite_pathway.csv")
-          env$met_class <- read_file("Metabolite_class.csv")
-          env$met_superclass <- read_file("Metabolite_super_class.csv")
+          env$met_biospecimen <- read_file("Metabolite_biospecimen.csv", "ID")
+          env$met_cellular <- read_file("Metabolite_cellular.csv", "ID")
+          env$met_path <- read_file("Metabolite_pathway.csv", "ID")
+          env$met_class <- read_file("Metabolite_class.csv", "ID")
+          env$met_superclass <- read_file("Metabolite_super_class.csv", "ID")
 
           ## Indexed files
-          env$go_name_df <- read_file("Go_names.csv", "GOID")
+          env$go_name_df <- unique(read_file("Go_names.csv", "GOID"))
           env$meta_names <- read_file("Metabolite_name.csv", "ID")
           colnames(env$meta_names) <- c("ID", "Name")
           env$prot_names <- read_file("Protein_names.csv", "ID")
+          colnames(env$prot_names) <- c("ID", "Name", "Synonym")
           env$enzyme_df <- read_file("Ec_numbers.csv", "ID")
           env$prot_trans <- read_file("Protein_transporter.csv", "ID")
-          env$cofactor_df <- read_file("Cofactors.csv", "ID")
-          #heatmap_df <<- read_file("heatmap_matrix.csv", "V1")
-          #heatmap_df <<- heatmap_df[,-1]
+          #env$cofactor_df <- unique(read_file("Cofactors.csv", "ID"))
+
+          env$meta_pvalues <- read_file("Metabolite-pvalues_accurate.csv", "Metabolite")
+          env$id_names <- as.data.table(rbind.fill(env$prot_names, env$meta_names), key = "ID")
       }
   env$pp_interactions <- read_file(prot_file)
-  env$pp_interactions <- env$pp_interactions %>% dplyr::filter(Confidence > confidence)
+  env$pp_interactions <- env$pp_interactions[Confidence >= confidence]
   if (prot_file == "Protein-protein.csv"){
-    env$pm_interactions <- env$pm_interactions[env$pm_interactions$To %in% env$protein_go_df$ID,]
+    env$pm_interactions <- env$pm_interactions[To %in% env$protein_go_df$ID,]
   }
-  env$interactions <- rbind.fill(env$pp_interactions, env$mm_interactions, env$pm_interactions)
+  env$size <- reactiveVal(12)
+  env$pp_confidence <- reactiveVal(confidence)
+  env$interactions <- as.data.table(rbind(env$pp_interactions, env$mm_interactions, env$pm_interactions))
 }
 
 #'@title Build a new graph
@@ -107,12 +96,13 @@ load_interaction_data <- function(prot_file="Protein-protein.csv", confidence=0,
 #'@importFrom plotly renderPlotly plot_ly layout
 #'@importFrom shinyjs disable enable
 #'@importFrom DT renderDataTable
+#'@noRd
 build_button <- function(filter){
     shiny::validate(need(filter, ""))
     updateTabItems(session, "tabs", "network")
     sapply(to_disable, shinyjs::disable) 
-    graph <- get_graph(filter, neighbours = neighbours(), 
-                                   max_neighbours = neighbour_edges(), 
+    graph <- get_graph(filter, neighbours = neighbours(), omit_lipids = omitting_lipids(), 
+                                   max_neighbours = neighbour_edges(), verbose = F,
                                    type = input$mode, search_mode = search_mode())
     if (length(graph) == 0){
         ax <- list(zeroline = FALSE, showline = FALSE, showticklabels = FALSE, showgrid = FALSE)
@@ -122,9 +112,10 @@ build_button <- function(filter){
         output$heatmapplot <- renderPlotly(get_heatmap_plot(graph))
         output$barplot_centrality <- renderPlotly(get_barplot(graph))
         output$barplot_gos <- renderPlotly(get_go_barplot(graph))
-        output$scatter_plot <- renderPlotly(get_2d_scatter(graph))
+        #output$scatter_plot <- renderPlotly(get_2d_scatter(graph))
         output$datatable_nodes <- renderDataTable(get_node_table(graph))
         output$datatable_edges <- renderDataTable(get_edge_table(graph))
+        output$datatable_processes <- renderDataTable(get_process_table(graph))
     }
     sapply(to_disable, shinyjs::enable) 
     return(graph)
@@ -132,20 +123,26 @@ build_button <- function(filter){
 
 #'@title Get datatable options
 #'@usage get_options()
+#'@noRd
 get_options <- function(){
-    return(list(dom = 'Bfrtip', pageLength = 25, searchHighlight = TRUE,
-        buttons = list('copy', 'print', list( extend = 'collection',
-                buttons = c('csv', 'excel', 'pdf'), text = 'Download'
-        ))))
+    list(dom = 'Bfrtip', pageLength = 25, searchHighlight = TRUE,
+        buttons = list('copy', 'print', list(
+          extend = 'collection',
+          buttons = c('csv', 'excel', 'pdf'), 
+          text = 'Download'
+        ))
+    )
 }
+
 
 #'@title Get datatable for edges 
 #'@usage get_edge_table(
 #'    g
 #')
 #'@param g iGraph object obtained from to_graph() or get_graph()
-get_edge_table <- function(g){
-    datatable(igraph::as_data_frame(g, what = "edges")[,c("from", "to", "confidence")],
+#'@noRd
+get_edge_table <- function(g, edges = E(g)){
+    datatable(igraph::as_data_frame(g, what = "edges")[edges, c("from", "to", "Confidence")],
               extensions = 'Buttons', options = get_options(), class = 'cell-border stripe', 
               selection = "none", style = "bootstrap")
 }
@@ -156,13 +153,37 @@ get_edge_table <- function(g){
 #')
 #'@param g iGraph object obtained from to_graph() or get_graph()
 #'@importFrom DT datatable
-get_node_table <- function(g){
-    df <- igraph::as_data_frame(g, what = "vertices")[,c(
-        "id", "centrality", "enzyme", "cofactor", "type", 
-        "go",  "pathway", "superclass", "class")] 
+#'@noRd
+get_node_table <- function(g, nodes = V(g)){
+    df <- igraph::as_data_frame(g, what = "vertices")[nodes, c(
+        "id", "closeness", "type", "class", "superclass")] 
     datatable(df, selection = "none", extensions = 'Buttons', options = get_options(), 
               class = 'cell-border stripe', escape = F, style = "bootstrap")
 }
+#'@title Get datatable for processes
+#'@importFrom DT formatSignif
+#'@importFrom reshape melt
+get_process_table <- function(g, nodes = V(g)){
+  df <- igraph::as_data_frame(g, what = "vertices")[nodes, c("id", "go")]
+  if (length(unlist(df$go)) > 0){
+    df <- suppressMessages(reshape::melt(lapply(na.omit.list(setNames(df$go, df$id)), 
+                                       function(x) data.frame(pvalue = x, `Process ID` = names(x)))))
+    df <- df[,-2]
+    colnames(df) <- c("Process.ID", "Pvalue", "Metabolite.ID")
+    df$Metabolite <- get_metabolite_names(df$Metabolite.ID)
+    df$Process <- get_go_names(df$Process.ID)
+    df <- df[,c("Metabolite", "Metabolite.ID", "Process", "Process.ID", "Pvalue")]
+    df <- df[order(df$Pvalue),]
+  } else {
+    df <- data.frame(Metabolite = get_metabolite_names(df$id), Metabolite.Id = df$id, Process = "", "Pvalue" = "")
+  }
+  
+  datatable(df, selection = "none", extensions = 'Buttons', options = get_options(), 
+            class = 'cell-border stripe', escape = F, style = "bootstrap") %>%
+    formatSignif(columns = c('Pvalue'), digits = 3)
+}
+
+
 
 #'@title Get Plotly barplot for Gene Ontologies
 #'@usage get_go_barplot(
@@ -171,11 +192,15 @@ get_node_table <- function(g){
 #'@param g iGraph object obtained from to_graph() or get_graph()
 #'@importFrom plotly ggplotly
 #'@importFrom ggplot2 ggplot geom_bar theme_minimal theme theme_void
+#'@noRd
 get_go_barplot <- function(g){
     d <- unlist(igraph::as_data_frame(g, what = "vertices")$go)
     df <- unique(data.frame(go = names(d), pvalues = d))
+    df <- df[df$pvalues < 0.05,]
+    
     if (nrow(df) > 0){
-        return(plotly::ggplotly(ggplot2::ggplot(df, aes(x = go, y = pvalues)) + 
+        df$go <- get_go_names(df$go)
+        return(plotly::ggplotly(ggplot2::ggplot(df, aes(x = reorder(go, pvalues), y = pvalues)) + 
                             geom_bar(stat = "identity") + theme_minimal() + 
                             theme(axis.text.x = element_text(angle = 45)))
         )
@@ -192,14 +217,15 @@ get_go_barplot <- function(g){
 #'@importFrom plotly ggplotly
 #'@importFrom ggplot2 ggplot geom_bar xlab theme_minimal theme aes element_text
 #'@importFrom stats reorder
+#'@noRd
 get_barplot <- function(g){
     df <- igraph::as_data_frame(g, what = "vertices")
     df <- df %>% dplyr::filter(type == "Metabolite")
     df$name <- make.unique(substring(df$name, 1, 40))
-    ggplotly(ggplot(df, aes(x = reorder(name, -centrality), y = centrality, label = name)) + 
+    ggplotly(ggplot(df, aes(x = reorder(name, -closeness), y = closeness, label = name)) + 
                  geom_bar(stat = "identity") + xlab("") + theme_minimal() + 
                  theme(axis.text.x = element_text(angle = 45)), 
-             tooltip = c("name", "centrality"))
+             tooltip = c("name", "closeness"))
 }
 
 #'@title Get Plotly heatmap of distances
@@ -209,6 +235,7 @@ get_barplot <- function(g){
 #'@param g iGraph object obtained from to_graph() or get_graph()
 #'@importFrom heatmaply heatmaply
 #'@importFrom RColorBrewer brewer.pal
+#'@noRd
 get_heatmap_plot <- function(g){
     df <- 1 / igraph::shortest.paths(g) 
     df[is.infinite(df)] <- NA
@@ -232,12 +259,13 @@ get_heatmap_plot <- function(g){
 #'@param type String containing the type of search.
 #'@param search_mode String of either 'Interacts' or 'Between'. Interacts finds the first neighbour
 #'of the given search, while Between only returns interactions between the proteins / metabolites given.
+#'@noRd
 data_filter <- function(filter, neighbours=0, max_neighbours=Inf, type = "Gene Ontology", 
                         search_mode = "Interacts", omit_lipids=F){
     if (search_mode == "Shortest Path"){
-        data.selected <- get_shortest_path_graph(graph_from_data_frame(interactions), filter)
+        df <- get_shortest_path_graph(graph_from_data_frame(interactions), filter)
     } else if (type == "Gene Ontology"){
-        data.selected <- network_from_gos(filter, neighbours = neighbours, max = max_neighbours)
+        df <- network_from_gos(filter, neighbours = neighbours, max = max_neighbours)
     } else {
         search <- switch(search_mode, "Interacts" = "single", "Between" = "both")
         ids <- switch(type, 
@@ -248,20 +276,25 @@ data_filter <- function(filter, neighbours=0, max_neighbours=Inf, type = "Gene O
               "Superclasses" = get_ids_from_superclass(filter),
               "Classes" = get_ids_from_class(filter)
         )
-        data.selected <- get_all_interactions(ids, mode = search)
-        data.selected <- get_n_neighbours(data.selected, n=neighbours, max=max_neighbours)
+        df <- get_all_interactions(ids, mode = search)
+        df <- get_n_neighbours(df, n=neighbours, max=max_neighbours)
     }
-    
-    data.selected <- lipid_filter(data.selected, omit_lipids)
-    return(data.selected)
+    df <- lipid_filter(df, omit_lipids)
+    return(df[complete.cases(df),])
 }
 
-lipid_filter <- function(data.selected, omit_lipids){
+#'@title Retrieve data given a search
+#'@usage lipid_filter(
+#'    df,
+#'    omit_lipids
+#')
+#'@param df 2-column Dataframe of interactions containing ids 
+#'@param omit_lipids Boolean value if lipid metabolites should be omitted
+#'@noRd
+lipid_filter <- function(df, omit_lipids){
   if (omit_lipids){
-    from <- get_superclass(data.selected[,1])
-    to <- get_superclass(data.selected[,2])
-    indexes <- which(dplyr::coalesce(from, to) == "Lipids and lipid-like molecules")
-    data.selected <- data.selected[-indexes,]
+    lipids <- met_superclass[super_class == "Lipids and lipid-like molecules", ID]
+    return(df[which(df$From %in% lipids + df$To %in% lipids == 0), ])
   }
-  return(data.selected)
+  return(df)
 }

@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+import sys
+import csv
 from Preprocessing_ensembl import Ensembl
 from Preprocessing_stringdb import StringDB
 
@@ -24,11 +26,12 @@ class Uniprot:
         can be used, the dataframe is filtered for those without mapping.
         """
         self.df = pd.read_csv("https://www.uniprot.org/uniprot/?query=*&format=tab&columns=id,protein%20names,comment(COFACTOR),ec,database(TCDB)," + \
-        "go-id,database(Ensembl)&fil=organism:%22Homo%20sapiens%20(Human)%20[9606]%22%20AND%20reviewed:yes", sep="\t")
+        "go-id,database(Ensembl),database(Reactome)&fil=organism:%22Homo%20sapiens%20(Human)%20[9606]%22%20AND%20reviewed:yes", sep="\t")
         self.log.write(f"Found {len(self.df.index)} proteins in the Uniprot database\n")
         self.df = self.df.dropna(subset = ["Ensembl transcript"])
         self.log.write(f"Found {len(self.df.index)} proteins with a known transcript\n")
         self.df.reset_index(drop = True, inplace = True)
+        self.extract_protein_names() 
 
     def map_transcripts_to_proteins(self):
         """
@@ -46,9 +49,20 @@ class Uniprot:
         obtained from Uniprot.
         """
         self.extract_transporter()
-        self.extract_protein_names() 
         self.extract_ec_numbers() 
+        self.extract_reactome()
         self.extract_cofactor(chebi_mapping)
+
+    def extract_reactome(self):
+        df = self.df.dropna(subset=["Cross-reference (Reactome)"])
+        df = df[["Entry", "Cross-reference (Reactome)"]]
+        df["Cross-reference (Reactome)"] = df["Cross-reference (Reactome)"].str.findall(r'(R-HSA-\d+)')
+        df = df.explode("Cross-reference (Reactome)")  
+        df.columns = ["ID", "Pathway"]
+        df.to_csv(f"{self.options['folder']}/Protein_reactome.csv", index = False)
+        self.log.write(f"Found {len(df.index)} protein pathways\n")
+        print("Done Pathways")
+
 
     def extract_transporter(self):
         """
@@ -58,7 +72,8 @@ class Uniprot:
         df = self.df.dropna(subset=["Cross-reference (TCDB)"])
         df = df[["Entry", "Cross-reference (TCDB)"]]
         df.columns = ["ID", "Transporter"]
-        df["Transporter"] = df["Transporter"].str.strip(";")
+        df["Transporter"] = df["Transporter"].str.findall(r'(\d+\.[A-Z]+\.\d+\.\d+\.\d+)')
+        df = df.explode("Transporter")
         df.to_csv(f"{self.options['folder']}/Protein_transporter.csv", index = False)
         self.log.write(f"Found {len(df.index)} transporter proteins\n")
         print("Done Transporters")
@@ -69,12 +84,15 @@ class Uniprot:
         This method extracts protein names from Uniprot.
         """
         df = self.df[["Entry", "Protein names"]]
-        names = df["Protein names"].str.split("(", expand = False).str[0]
-        synonyms = df["Protein names"].str.split("(", expand = False).str[1].str.rstrip(") ")
+        
+        names = self.df["Protein names"].str.findall(r'.*? \(')
+        synonyms = names.str[1].str.rstrip(") (")
+        names = names.str[0].str.rstrip(" (")
+        names[names.isnull()] = df[names.isnull()]["Protein names"]
         synonyms[synonyms.isnull()] = names[synonyms.isnull()]
         df = pd.concat([df["Entry"], names, synonyms], axis = 1)
         df.columns = ["ID", "Name", "Synonym"]
-        df.to_csv(f"{self.options['folder']}/Protein_names.csv", index = False)
+        df.to_csv(f"{self.options['folder']}/Protein_names.csv", index = False, quoting=csv.QUOTE_ALL)
         self.log.write(f"written {len(df.index)} protein names to its file\n")
         print("Done Protein Names")
 
@@ -83,9 +101,11 @@ class Uniprot:
         This method extracts enzyme (EC) proteins from Uniprot.
         """
         df = self.df.dropna(subset=["EC number"])
-        column = df["EC number"].str.split(";", expand = False).str[0]
+        column = df["EC number"].str.findall(r'(\d+.\d+.\d+.\d+)')
         df = pd.concat([df["Entry"], column], axis = 1)
         df.columns = ["ID", "Number"]
+        df = df.explode("Number")
+        df.dropna(subset=["Number"], inplace=True)
         df.to_csv(f"{self.options['folder']}/Ec_numbers.csv", index = False)
         self.log.write(f"Found {len(df.index)} proteins with a EC number\n")
         print("Done EC Numbers")
@@ -97,11 +117,8 @@ class Uniprot:
         """
         conv.set_index("chebi_id", drop = False, inplace = True)
         df = self.df.dropna(subset=["Cofactor"])
-        df.reset_index(drop = True, inplace = True)
-        column = df["Cofactor"].str.split("ChEBI:", expand = False).str[1]
-        column = column.str.split(";", expand = False).str[0].str.strip()
-        df = pd.concat([df["Entry"], column], axis = 1)
-        df = df.dropna(subset=["Cofactor"])
+        df["Cofactor"] = df["Cofactor"].str.findall(r'(CHEBI:\d+)')
+        df = df.explode("Cofactor")
         df.reset_index(drop = True, inplace = True)
         cof = conv.loc[df.Cofactor.loc[df.Cofactor.isin(conv.index)], "ID"]
         cof.reset_index(drop = True, inplace = True)
@@ -120,7 +137,7 @@ class Uniprot:
         """
         string_db = StringDB(self.options, self.log)
         string_db.get_stringdb_df()
-        self.df["Gene ontology IDs"] = self.df["Gene ontology IDs"].str.split(";", expand = False)
+        self.df["Gene ontology IDs"] = self.df["Gene ontology IDs"].str.findall(r'(GO:\d+)')
         go_series = self.df["Gene ontology IDs"].explode()
         indexes = go_series.iloc[np.where(go_series.isin(gos))].index      
         string_db.extract_protein_interactions(self.df, indexes)        
