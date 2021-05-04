@@ -14,3 +14,7 @@ add_closeness(
 \description{
 Add closeness to your graph
 }
+\examples{
+graph <- example_graph()
+graph <- add_closeness(graph)
+}

@@ -8,3 +8,6 @@ NonPackageCode
 build.r
 *.pyc
 *.png
+*.svg
+*.csv
+*.Rhistory

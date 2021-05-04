@@ -4,7 +4,12 @@
 \alias{example_graph}
 \title{Produce the example graph}
 \usage{
-example_graph()
+example_graph(
+   omit_lipids = F
+)
+}
+\arguments{
+\item{omit_lipids}{Boolean value}
 }
 \description{
 Produce the example graph

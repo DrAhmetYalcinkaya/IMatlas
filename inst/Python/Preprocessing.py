@@ -44,10 +44,10 @@ def main(config_path):
 
     log = open(f"{options['folder']}/Log_preprocessing.txt", "w", buffering=1)
 
-    hmdb_db = HMDB(options, log)
-    hmdb_db.parse_hmdb()
-    rhea_db = RheaDB(options, log)
-    rhea_db.parse_rhea(hmdb_db.get_chebi_mapping())
+    #hmdb_db = HMDB(options, log)
+    #hmdb_db.parse_hmdb()
+    #rhea_db = RheaDB(options, log)
+    #rhea_db.parse_rhea(hmdb_db.get_chebi_mapping())
 
     go_db = GODB(options, log)
     gos = go_db.get_descendants()
@@ -55,7 +55,7 @@ def main(config_path):
     uniprot = Uniprot(options, log)
     uniprot.retrieve_uniprot_df()
     uniprot.map_transcripts_to_proteins()
-    uniprot.parse_metadata(hmdb_db.get_chebi_mapping())
+    #uniprot.parse_metadata(hmdb_db.get_chebi_mapping())
     df = uniprot.parse_protein_interactions(gos)
     go_db.extract_gos(df) 
     log.close()

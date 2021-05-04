@@ -4,7 +4,7 @@
 \alias{get_process_table}
 \title{Get datatable for processes}
 \usage{
-get_process_table(g)
+get_process_table(g, nodes = V(g))
 }
 \description{
 Get datatable for processes

@@ -2,10 +2,13 @@
 % Please edit documentation in R/GraphBuilder.R
 \name{add_node_pvalues}
 \alias{add_node_pvalues}
-\title{Adds pvalues to nodes}
+\title{calculate all node-based pvalues}
 \usage{
-add_node_pvalues(graph, verbose = T)
+add_node_pvalues(
+   graph,
+   order = 1
+)
 }
 \description{
-Adds pvalues to nodes
+calculate all node-based pvalues
 }

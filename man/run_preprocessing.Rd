@@ -4,7 +4,9 @@
 \alias{run_preprocessing}
 \title{Run Preprocessing}
 \usage{
-run_preprocessing(config_path = "config.yaml")
+run_preprocessing(
+   config_path = "config.yaml"
+)
 }
 \description{
 Run Preprocessing

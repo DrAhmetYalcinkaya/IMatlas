@@ -17,3 +17,7 @@ add_layout(
 \description{
 Calculate layout for nodes in graph
 }
+\examples{
+graph <- example_graph()
+graph <- add_layout(graph)
+}

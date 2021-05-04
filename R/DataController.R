@@ -265,7 +265,7 @@ data_filter <- function(filter, neighbours=0, max_neighbours=Inf, type = "Gene O
     if (search_mode == "Shortest Path"){
         df <- get_shortest_path_graph(graph_from_data_frame(interactions), filter)
     } else if (type == "Gene Ontology"){
-        df <- network_from_gos(filter, neighbours = neighbours, max = max_neighbours)
+        df <- network_from_gos(filter, neighbours = neighbours)#, max = max_neighbours)
     } else {
         search <- switch(search_mode, "Interacts" = "single", "Between" = "both")
         ids <- switch(type, 

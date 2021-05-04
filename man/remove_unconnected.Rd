@@ -14,3 +14,7 @@ remove_unconnected(
 \description{
 Remove unconnected nodes
 }
+\examples{
+graph <- example_graph()
+graph <- remove_unconnected(graph)
+}

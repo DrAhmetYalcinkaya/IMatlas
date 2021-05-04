@@ -17,3 +17,7 @@ add_gos(
 \description{
 Assign Gene Ontologies to vertices
 }
+\examples{
+graph <- example_graph()
+graph <- add_gos(graph)
+}

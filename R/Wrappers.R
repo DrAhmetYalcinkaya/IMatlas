@@ -15,6 +15,7 @@
 #'@export
 load_data <- function(config="config.yaml", neighbours=0, confidence=0, full=T, verbose=T){
     env <<- sys.frame()
+    usage_order <<- reactiveVal(1)
     env$options <- adjust_folder(yaml::read_yaml(config))
     env$pvalue_filter <- reactiveVal(1)
     prot_files <- list("Direct" = "Protein-protein.csv", 
@@ -38,7 +39,6 @@ load_data <- function(config="config.yaml", neighbours=0, confidence=0, full=T, 
 }
 
 #'@title Get igraph object
-#'@description
 #'@usage get_graph(
 #'    filter,
 #'    neighbours = 0,
@@ -84,7 +84,6 @@ get_graph <- function(filter, neighbours = 0, max_neighbours=Inf, simple = F, om
 }
 
 #'@title Get metadata of metabolites
-#'@description
 #'@usage get_metabolite_metadata(
 #'    graph,
 #'    metadata
@@ -106,7 +105,6 @@ get_metabolite_metadata <- function(graph, metadata){
 }
 
 #'@title Produce the example graph
-#'@description
 #'@usage example_graph(
 #'    omit_lipids = F
 #')
@@ -149,12 +147,9 @@ metabolic_process_summary <- function(graph, p=1, closeness = 0){
 }
 
 #'@title Run Preprocessing
-#'@description
 #'@usage run_preprocessing(
 #'    config_path = "config.yaml"
 #')
-#'@param config_path
-#'@example 
 #'@importFrom reticulate py_available py_config
 #'@export
 run_preprocessing <- function(config_path="config.yaml"){
@@ -187,14 +182,12 @@ run_preprocessing <- function(config_path="config.yaml"){
 }
 
 #'@title Run calculate all metabolite-go pvalues
-#'@description
-#'@usage 
 #'@export
 calculate_all_node_pvalues <- function(config_path, order = 1){
   env$options <- adjust_folder(yaml::read_yaml(config_path))
   g <- get_graph("immune system process", verbose = F, simple = T) %>%
     add_closeness() %>%
-    calculate_node_pvalues(order = order) 
+    add_node_pvalues(order = order) 
   
   mets <- get_metabolite_vertice_ids(g)
   gos <- V(g)[mets]$go
@@ -206,12 +199,9 @@ calculate_all_node_pvalues <- function(config_path, order = 1){
 }
 
 #'@title Run the text mining
-#'@description
 #'@usage run_textmining(
 #'    config_path = "config.yaml"
 #')
-#'@param
-#'@example
 #'@export
 run_textmining <- function(config_path="config.yaml"){
   env <- sys.frame()
@@ -231,9 +221,6 @@ run_textmining <- function(config_path="config.yaml"){
 }
 
 #'@title Perform text mining analysis
-#'@description
-#'@usage
-#'@param
 #'@importFrom networkD3 sankeyNetwork
 #'@export
 textmining_analysis <- function(config_path="config.yaml", font = 18){

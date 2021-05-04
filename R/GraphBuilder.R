@@ -9,8 +9,7 @@ to_graph <- function(graph, type, verbose){
     graph %>%
       add_closeness() %>%
       add_gos(verbose = verbose) %>%
-      #add_node_pvalues(verbose = verbose) %>%
-      calculate_node_pvalues(order = isolate(usage_order())) %>%
+      add_node_pvalues(order = isolate(usage_order())) %>%
       {if (type == "GO Simple") metabolite_go_graph() else .} %>%
       add_metadata() %>%
       add_node_types() %>%
@@ -23,7 +22,7 @@ to_graph <- function(graph, type, verbose){
 #'    graph
 #')
 #'@param graph igraph object representing your graph
-#'@example
+#'@examples
 #'graph <- example_graph()
 #'graph <- add_closeness(graph)
 #'@export
@@ -42,7 +41,7 @@ add_closeness <- function(graph){
 #'    graph
 #')
 #'@param graph igraph object representing your graph
-#'@example
+#'@examples
 #'graph <- example_graph()
 #'graph <- remove_unconnected(graph)
 #'@importFrom igraph induced.subgraph V degree
@@ -62,7 +61,7 @@ remove_unconnected <- function(graph){
 #')
 #'@param graph igraph object representing your graph
 #'@param iterations Integer representing number of iterations
-#'@example
+#'@examples
 #'graph <- example_graph()
 #'graph <- add_layout(graph)
 #'@importFrom igraph layout_with_fr V
@@ -79,7 +78,7 @@ add_layout <- function(graph, iterations = 2000){
 #'    graph
 #')
 #'@param graph igraph object representing your graph
-#'@example
+#'@examples
 #'graph <- example_graph()
 #'graph <- add_communities(graph)
 #'@importFrom leiden leiden
@@ -99,7 +98,7 @@ add_communities <- function(graph){
 #')
 #'@param graph igraph object representing your graph
 #'@param verbose Present a warning when no proteins are found?
-#'@example
+#'@examples
 #'graph <- example_graph()
 #'graph <- add_gos(graph)
 #'@export
@@ -141,8 +140,6 @@ metabolite_go_graph <- function(graph){
 #'    graph,
 #'    order = 1
 #')
-#'@param graph
-#'@param order
 #'@importFrom igraph induced.subgraph neighbors neighborhood
 #'@importFrom pbapply pblapply
 #'@export
@@ -164,7 +161,6 @@ add_node_pvalues <- function(graph, order = 1){
 #'@usage add_node_types(
 #'    graph
 #')
-#'@param graph
 #'@export
 add_node_types <- function(graph){
   if (typeof(graph) == "list"){
@@ -363,8 +359,6 @@ fishers_test <- function(id, all_go_in_network, all_go){
 #'    nodes,
 #'    all_go
 #')
-#'@param nodes
-#'@param all_go
 #'@importFrom stats p.adjust
 #'@noRd
 calculate_pvalues <- function(nodes, all_go){

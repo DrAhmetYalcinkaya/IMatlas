@@ -9,7 +9,7 @@ igraph_to_plotly2(
 )
 }
 \arguments{
-\item{g}{iGraph object obtained from to_graph() or get_graph()}
+\item{g}{iGraph object obtained from get_graph()}
 }
 \description{
 Convert igraph object to an interactive Plotly

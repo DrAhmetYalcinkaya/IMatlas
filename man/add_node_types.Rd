@@ -4,7 +4,9 @@
 \alias{add_node_types}
 \title{Add the type of each node}
 \usage{
-add_node_types(graph)
+add_node_types(
+   graph
+)
 }
 \description{
 Add the type of each node

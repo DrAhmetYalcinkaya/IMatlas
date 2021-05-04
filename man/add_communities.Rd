@@ -14,3 +14,7 @@ add_communities(
 \description{
 Identify communities in the graph
 }
+\examples{
+graph <- example_graph()
+graph <- add_communities(graph)
+}

@@ -6,13 +6,10 @@
 \usage{
 add_vertice_colors(
    graph,
-   mets
 )
 }
 \arguments{
-\item{g}{iGraph object obtained from to_graph() or get_graph()}
-
-\item{mets}{iGraph identifiers of metabolites}
+\item{graph}{iGraph object obtained from to_graph() or get_graph()}
 }
 \description{
 Adding colors to vertices of the graph

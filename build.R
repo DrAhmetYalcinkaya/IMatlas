@@ -47,7 +47,7 @@ length(unique(names(unlist(na.omit.list(V(graph)$go)))))
 
 order_test <- function(order=1){
   graph <- get_graph("immune system process", simple = T, omit_lipids = T) %>%
-    calculate_node_pvalues(order = order) 
+    add_node_pvalues(order = order) 
   
   to_keep <- !sapply(V(graph)$go, is.null)
   l <- na.omit.list(V(graph)$go)
@@ -89,7 +89,6 @@ order_test <- function(order=1){
 }
 library(ggplot2)
 l1 <- order_test(order = 1)
-l1
 
 l2 <- order_test(order = 2)
 l3 <- order_test(order = 3)
@@ -97,7 +96,8 @@ l3 <- order_test(order = 3)
 l3
 
 df <- rbind(unlist(l1[[2]]), unlist(l2[[2]]), unlist(l3[[2]]))
-rownames(df) <- c("Order1", "Order2")
+df
+rownames(df) <- c("Order1", "Order2", "Order3")
 df <- reshape::melt(df)
 colnames(df) <- c("Group", "Metric", "Value")
 df$Value <- round(df$Value, 3)
@@ -143,6 +143,9 @@ text_ext$conc <- paste(text_ext$GO, text_ext$Metabolite)
 combs <- expand.grid(unique(go_name_df$Name), unique(text_ext$Metabolite))
 combs$conc <- paste(combs[,1], combs[,2])
 
+combs
+
+head(df)
 
 df$pred <- "Y"
 

@@ -5,11 +5,11 @@
 \title{Adding metadata to igraph object}
 \usage{
 add_metadata(
-   g
+   graph
 )
 }
 \arguments{
-\item{g}{iGraph object obtained from to_graph() or get_graph()}
+\item{graph}{iGraph object obtained from to_graph() or get_graph()}
 }
 \description{
 Adding metadata to igraph object

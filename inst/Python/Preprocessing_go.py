@@ -70,6 +70,7 @@ class GODB:
         ancestors of the given term. This is due to the hierarchial
         nature of Gene Ontology.
         """
+
         ancestors = self.get_ancestors()
         tot = []
         print(df)

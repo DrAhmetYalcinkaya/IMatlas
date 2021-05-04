@@ -5,11 +5,11 @@
 \title{Produce 2D pvalue-closeness scatter plot}
 \usage{
 get_2d_scatter(
-   g
+   graph
 )
 }
 \arguments{
-\item{g}{iGraph object obtained from to_graph() or get_graph()}
+\item{graph}{iGraph object obtained from to_graph() or get_graph()}
 }
 \description{
 Produce 2D pvalue-closeness scatter plot

@@ -4,7 +4,7 @@
 #')
 #'@param options YAML list containing field-value pairs. 
 #'See the ReadMe for mandatory fields. Returns vector of GO IDs.
-#'@example
+#'@examples
 #'options <- list(GO_ID = "GO:0002376")
 #'go_vec <- get_gos(options)
 #'@importFrom httr GET content
@@ -213,7 +213,6 @@ get_all_interactions <- function(ids, mode = "both"){
 #'@usage get_gos_per_protein(
 #'    id
 #')
-#'@param id
 #'@noRd
 get_gos_per_protein <- function(id) go_name_df[protein_go_df[id, GOID], unique(Name)]
 
@@ -222,7 +221,6 @@ get_gos_per_protein <- function(id) go_name_df[protein_go_df[id, GOID], unique(N
 #'@usage get_all_protein_gos(
 #'    ids
 #')
-#'@param ids
 #'@noRd
 get_all_protein_gos <- function(ids) lapply(ids, get_gos_per_protein)
 
@@ -274,7 +272,6 @@ get_cellular_location <- function(ids) met_cellular[ids, cellular]
 #'@usage get_all_pathways(
 #'    ids
 #')
-#'@param ids
 #'@noRd
 get_all_pathways <- function(ids){
   sapply(ids, simplify = F, USE.NAMES = T, function(x) met_path[x, pathway])
@@ -337,8 +334,6 @@ convert_names_to_ids <- function(names) id_names[names, on="Name", ID, allow.car
 #'    gos,
 #'    neighbours = 0
 #')
-#'@param gos
-#'@param neighbours 
 #'@noRd
 network_from_gos <- function(gos, neighbours=0){
     proteins <- get_proteins_by_go(gos)
