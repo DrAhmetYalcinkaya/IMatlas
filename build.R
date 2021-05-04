@@ -7,7 +7,7 @@ usethis::use_mit_license("Pascal Maas")
 packages <- c("shiny", "igraph", "colourpicker", "httr", "dplyr", "viridis", "stringr", "leiden",
               "shinythemes", "shinycssloaders", "waiter", "AnnotationDbi", "pbapply", "networkD3",
               "shinydashboard", "htmlwidgets", "heatmaply", "DT", "yaml", "purrr",
-              "RColorBrewer", "shinyalert", "plotly", "shinyjs", "data.table", 
+              "RColorBrewer", "shinyalert", "plotly", "shinyjs", "data.table", "reshape",
               "formattable", "gtools", "ggplot2", "GO.db", "plyr", "reticulate")
 invisible(sapply(packages, usethis::use_package))
 
