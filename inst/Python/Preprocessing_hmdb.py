@@ -6,6 +6,7 @@ import numpy as np
 import io
 import zipfile
 import logging
+from tqdm import tqdm
 
 class HMDB:
     """ This class chunks an xml file (zipped) into chunks, so that a DOM parser can be used
@@ -38,13 +39,12 @@ class HMDB:
             if field not in exclude:
                 self.files[field] = open(f"{self.options['folder']}/Metabolite_{field}.csv", "w", encoding="utf-8")
                 self.write(field, ["ID", field])
-                logging.info(f"Created file {self.options['folder']}/Metabolite_{field}.csv\n")
+                logging.info(f"Created file {self.options['folder']}/Metabolite_{field}.csv")
 
     def chunk(self):
         """
         This method creates a generator by yielding a ElementTree object for each chunk
         """
-        print("Start parsing")
         with self.source.open("hmdb_metabolites.xml", "r") as f:
             next(f)
             next(f)
@@ -97,7 +97,7 @@ class HMDB:
         """
         
         """
-        print("Start downloading HMDB XML")
+        logging.info("Start downloading HMDB XML")
         url = 'https://hmdb.ca/system/downloads/current/hmdb_metabolites.zip'
         r = requests.get(url, stream=True)
         z = zipfile.ZipFile(io.BytesIO(r.content))
@@ -115,7 +115,7 @@ class HMDB:
                         count += self.process_metabolite(chunk)
                     pbar.update(1)
         self.close()  
-        logging.info(f"Extracted {count} metabolites out of {n} from HMDB\n")
+        logging.info(f"Extracted {count} metabolites out of {n} from HMDB")
 
     
     def process_metabolite(self, chunk):

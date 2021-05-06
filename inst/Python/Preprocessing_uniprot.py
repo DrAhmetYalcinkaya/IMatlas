@@ -4,6 +4,7 @@ import sys
 import csv
 from Preprocessing_ensembl import Ensembl
 from Preprocessing_stringdb import StringDB
+import logging
 
 class Uniprot:
     """ 

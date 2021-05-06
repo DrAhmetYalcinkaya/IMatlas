@@ -10,7 +10,7 @@ class StringDB:
     def __init__(self, options):
         self.options = options
         self.string_df = []
-        logging.info("\nStart protein-protein interactions\n")
+        logging.info("Start protein-protein interactions")
 
     def get_stringdb_df(self):
         """
@@ -24,7 +24,7 @@ class StringDB:
         self.string_df["protein2"] = self.string_df["protein2"].str.lstrip("9606.")
         self.string_df.reset_index(drop = True, inplace = True)
         self.string_df.columns = ["From", "To", "Confidence"]
-        logging.info(f"Found {len(self.string_df.index)} unique interactions in StringDB\n")
+        logging.info(f"Found {len(self.string_df.index)} unique interactions in StringDB")
 
     def map_string_to_uniprot(self, df):
         """
@@ -36,7 +36,7 @@ class StringDB:
         self.string_df = self.string_df.loc[(self.in_df(df, "From")) & (self.in_df(df, "To"))]
         self.string_df["From"] = list(df.loc[self.string_df["From"]]["Entry"])
         self.string_df["To"] = list(df.loc[self.string_df["To"]]["Entry"])
-        logging.info(f"Mapped {len(self.string_df.index)} interactions containing proteins to Uniprot identifiers\n")
+        logging.info(f"Mapped {len(self.string_df.index)} interactions containing proteins to Uniprot identifiers")
         return df
     
     def in_df(self, df, column):
@@ -53,7 +53,7 @@ class StringDB:
         df = self.map_string_to_uniprot(df)
         ids = list(df.iloc[rows]["Entry"])
         rows = list(set(np.where(self.string_df["From"].isin(ids))[0]) & set(np.where(self.string_df["To"].isin(ids))[0]))
-        logging.info(f"Found {len(rows)} interactions between proteins of interest\n")
+        logging.info(f"Found {len(rows)} interactions between proteins of interest")
         self.string_df.iloc[rows].to_csv(f"{self.options['folder']}/Protein-protein.csv", index = False)
         self.extract_neighbours(ids)
         logging.info("Done Protein-Protein Interactions")
@@ -64,11 +64,11 @@ class StringDB:
         to a file. It repeats this process twice so two rounds of neighbours are found.
         """
         files = ["Protein-protein_1.csv", "Protein-protein_2.csv"]
-        logging.info(f"Start {len(files)} iterations of intermediate protein-protein interactions\n")
+        logging.info(f"Start {len(files)} iterations of intermediate protein-protein interactions")
 
         for f in files:
             rows = list(np.where(self.string_df["From"].isin(ids))[0]) 
-            logging.info(f"Found {len(rows)} interactions between proteins of interest\n")
+            logging.info(f"Found {len(rows)} interactions between proteins of interest")
             self.string_df.iloc[rows].to_csv(f"{self.options['folder']}/{f}", index = False)
             ids = list(set(self.string_df.iloc[rows][["From", "To"]].stack().values))
-            logging.info(f"Found {len(ids)} neighbouring proteins\n")
+            logging.info(f"Found {len(ids)} neighbouring proteins")

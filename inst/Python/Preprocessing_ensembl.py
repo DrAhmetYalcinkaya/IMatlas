@@ -11,7 +11,7 @@ class Ensembl:
     This class handles the conversion of Ensembl transcripts to Ensembl proteins as used by StringDB.
     """
     def __init__(self, options):
-        print("Connecting with Ensembl DB")
+        logging.info("Connecting with Ensembl DB")
 
         self.server = "http://rest.ensembl.org"
         self.ext = "/lookup/id/Translation"
@@ -33,7 +33,7 @@ class Ensembl:
             logging.info(f"Mapped {self.submitted_ids} out of {len(self.transcripts)}", end="\r")
             return [[id, self.json[id]["Translation"]["id"]] for id in self.json.keys() if self.json.get(id) is not None and "Translation" in self.json[id].keys()]
         except:
-            logging.error(f"Encounterd a problem with status code {req.status_code}. Trying again in 60 seconds.")
+            logging.warning(f"Encounterd a problem with status code {req.status_code}. Trying again in 60 seconds.")
             sleep(60)
             self.get_response(ids)
 
@@ -50,7 +50,7 @@ class Ensembl:
         """
 
         """
-        logging.ingo("Start mapping transcripts to Ensembl Proteins")
+        logging.info("Start mapping transcripts to Ensembl Proteins")
         n = 1000
         with ThreadPoolExecutor() as ex:
             futures = [ex.submit(self.get_response, self.transcripts[i:i+n]) 
@@ -75,5 +75,5 @@ class Ensembl:
         indexes = mapping.index.intersection(df.index)
         df = pd.concat([df.loc[indexes], mapping.loc[indexes]["StringDB"]], axis=1, sort=True)
         df.reset_index(drop = True, inplace = True)
-        logging.info(f"Found {len(df.index)} proteins that were mapped to StringDB identifiers\n")
+        logging.info(f"Found {len(df.index)} proteins that were mapped to StringDB identifiers")
         return df

@@ -12,7 +12,7 @@ def import_or_install(packages):
             pip.main(['install', to_install])  
 
 packages = {"yaml": "pyYaml", "pandas": "pandas", "numpy": "numpy", "zipfile": "zipfile",
-    "json": "json", "gzip": "gzip", "requests": "requests", "pathlib": "pathlib",
+    "json": "json", "gzip": "gzip", "requests": "requests", "pathlib": "pathlib", "tqdm": "tqdm",
     "xml": "xml", "re": "re", "concurrent": "concurrent", "io": "io", "itertools": "itertools"
 }
 import_or_install(packages)
@@ -41,6 +41,7 @@ def main(config_path):
     with open(config_path) as file: 
         options = yaml.load(file, Loader=yaml.FullLoader)
         Path(options["folder"]).mkdir(parents=True, exist_ok=True)
+    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
     logging.info("Opened Config file.")
     options['folder'] = options['folder'].rstrip("/")
 

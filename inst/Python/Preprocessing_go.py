@@ -14,7 +14,7 @@ class GODB:
         self.options = options
         self.go_id = options["GO_ID"]
         self.gos = []
-        logging.info(f"Start log\n\nGO term: {self.go_id}\n")
+        logging.info(f"Start log\n\nGO term: {self.go_id}")
 
     def get_descendants(self):
         """
@@ -25,7 +25,7 @@ class GODB:
         url = "https://www.ebi.ac.uk/QuickGO/services/ontology/go/terms/{}/descendants".format(self.go_id) 
         dic = dict(json.loads(requests.get(url).content))
         desc = list(set(dic["results"][0]["descendants"]))
-        logging.info(f"Number of descendants: {len(desc)}\n")
+        logging.info(f"Number of descendants: {len(desc)}")
         desc = [a.strip() for a in desc]
         self.gos = desc + [self.go_id.strip()]
         return self.gos
