@@ -75,7 +75,7 @@ load_interaction_data <- function(prot_file="Protein-protein.csv", confidence=0,
           env$prot_trans <- read_file("Protein_transporter.csv", "ID")
           #env$cofactor_df <- unique(read_file("Cofactors.csv", "ID"))
 
-          env$meta_pvalues <- read_file("Metabolite-pvalues_accurate.csv", "Metabolite")
+          #env$meta_pvalues <- read_file("Metabolite-pvalues_accurate.csv", "Metabolite")
           env$id_names <- as.data.table(rbind.fill(env$prot_names, env$meta_names), key = "ID")
       }
   env$pp_interactions <- read_file(prot_file)

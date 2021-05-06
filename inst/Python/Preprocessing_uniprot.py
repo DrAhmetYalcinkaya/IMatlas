@@ -12,9 +12,8 @@ class Uniprot:
     to proteins using Ensembl, extracting metadata and extracting 
     protein-protein interactions from StringDB. 
     """
-    def __init__(self, options, log):
+    def __init__(self, options):
         self.options = options
-        self.log = log
         self.df = []
         self.indexes = []
 
@@ -27,9 +26,9 @@ class Uniprot:
         """
         self.df = pd.read_csv("https://www.uniprot.org/uniprot/?query=*&format=tab&columns=id,protein%20names,comment(COFACTOR),ec,database(TCDB)," + \
         "go-id,database(Ensembl),database(Reactome)&fil=organism:%22Homo%20sapiens%20(Human)%20[9606]%22%20AND%20reviewed:yes", sep="\t")
-        self.log.write(f"Found {len(self.df.index)} proteins in the Uniprot database\n")
+        logging.info(f"Found {len(self.df.index)} proteins in the Uniprot database\n")
         self.df = self.df.dropna(subset = ["Ensembl transcript"])
-        self.log.write(f"Found {len(self.df.index)} proteins with a known transcript\n")
+        logging.info(f"Found {len(self.df.index)} proteins with a known transcript\n")
         self.df.reset_index(drop = True, inplace = True)
         self.extract_protein_names() 
 
@@ -38,7 +37,7 @@ class Uniprot:
         Here, using the Ensembl class, transcripts in the Uniprot dataframe are mapped 
         to Ensembl proteins for usage in StringDB protein-protein interactions. 
         """
-        ensembl_db = Ensembl(self.options, self.log)
+        ensembl_db = Ensembl(self.options)
         self.df = ensembl_db.set_transcripts(self.df)
         mapping = ensembl_db.get_transcript_mapping()
         self.df = ensembl_db.get_ensembl_proteins(self.df, mapping)
@@ -60,23 +59,21 @@ class Uniprot:
         df = df.explode("Cross-reference (Reactome)")  
         df.columns = ["ID", "Pathway"]
         df.to_csv(f"{self.options['folder']}/Protein_reactome.csv", index = False)
-        self.log.write(f"Found {len(df.index)} protein pathways\n")
-        print("Done Pathways")
+        logging.info(f"Found {len(df.index)} protein pathways\n")
 
 
     def extract_transporter(self):
         """
         This method extracts transporter proteins from Uniprot.
         """
-        self.log.write("\nStart extracting transporter proteins\n")
+        logging.info("\nStart extracting transporter proteins\n")
         df = self.df.dropna(subset=["Cross-reference (TCDB)"])
         df = df[["Entry", "Cross-reference (TCDB)"]]
         df.columns = ["ID", "Transporter"]
         df["Transporter"] = df["Transporter"].str.findall(r'(\d+\.[A-Z]+\.\d+\.\d+\.\d+)')
         df = df.explode("Transporter")
         df.to_csv(f"{self.options['folder']}/Protein_transporter.csv", index = False)
-        self.log.write(f"Found {len(df.index)} transporter proteins\n")
-        print("Done Transporters")
+        logging.info(f"Found {len(df.index)} transporter proteins\n")
 
 
     def extract_protein_names(self):
@@ -93,8 +90,7 @@ class Uniprot:
         df = pd.concat([df["Entry"], names, synonyms], axis = 1)
         df.columns = ["ID", "Name", "Synonym"]
         df.to_csv(f"{self.options['folder']}/Protein_names.csv", index = False, quoting=csv.QUOTE_ALL)
-        self.log.write(f"written {len(df.index)} protein names to its file\n")
-        print("Done Protein Names")
+        logging.info(f"written {len(df.index)} protein names to its file\n")
 
     def extract_ec_numbers(self):
         """
@@ -107,8 +103,7 @@ class Uniprot:
         df = df.explode("Number")
         df.dropna(subset=["Number"], inplace=True)
         df.to_csv(f"{self.options['folder']}/Ec_numbers.csv", index = False)
-        self.log.write(f"Found {len(df.index)} proteins with a EC number\n")
-        print("Done EC Numbers")
+        logging.info(f"Found {len(df.index)} proteins with a EC number\n")
 
     def extract_cofactor(self, conv):
         """
@@ -127,7 +122,7 @@ class Uniprot:
         df["Cofactor"].replace('', np.nan, inplace=True)
         df.dropna(subset=["Cofactor"], inplace=True)
         df.to_csv(f"{self.options['folder']}/Cofactors.csv", index = False)
-        self.log.write(f"Found {len(df.index)} protein-metabolite cofactors combinations\n")
+        logging.info(f"Found {len(df.index)} protein-metabolite cofactors combinations\n")
 
     def parse_protein_interactions(self, gos):
         """
@@ -135,7 +130,7 @@ class Uniprot:
         and extracts proteins that are associated with Gene Ontologies that are 
         descendants of the original provided Gene Ontology.
         """
-        string_db = StringDB(self.options, self.log)
+        string_db = StringDB(self.options)
         string_db.get_stringdb_df()
         self.df["Gene ontology IDs"] = self.df["Gene ontology IDs"].str.findall(r'(GO:\d+)')
         go_series = self.df["Gene ontology IDs"].explode()

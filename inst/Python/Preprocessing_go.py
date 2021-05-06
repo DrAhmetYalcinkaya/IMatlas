@@ -2,6 +2,7 @@ import json
 import requests
 import pandas as pd
 import numpy as np
+import logging
 
 class GODB:
     """
@@ -9,13 +10,11 @@ class GODB:
     For a given Gene Ontology, descendants and ancestors can be requested
     so all relevant GOs of the given GO in the configuration can be retrieved.
     """
-    def __init__(self, options, log):
+    def __init__(self, options):
         self.options = options
         self.go_id = options["GO_ID"]
-        self.log = log
         self.gos = []
-        self.log.write(f"Start log\n\nGO term: {self.go_id}\n")
-
+        logging.info(f"Start log\n\nGO term: {self.go_id}\n")
 
     def get_descendants(self):
         """
@@ -26,8 +25,7 @@ class GODB:
         url = "https://www.ebi.ac.uk/QuickGO/services/ontology/go/terms/{}/descendants".format(self.go_id) 
         dic = dict(json.loads(requests.get(url).content))
         desc = list(set(dic["results"][0]["descendants"]))
-        self.log.write(f"Number of descendants: {len(desc)}\n")
-        print("Gathered Gene Ontologies")
+        logging.info(f"Number of descendants: {len(desc)}\n")
         desc = [a.strip() for a in desc]
         self.gos = desc + [self.go_id.strip()]
         return self.gos
@@ -70,10 +68,9 @@ class GODB:
         ancestors of the given term. This is due to the hierarchial
         nature of Gene Ontology.
         """
-
+        
         ancestors = self.get_ancestors()
         tot = []
-        print(df)
         for entry, gos in zip(df["Entry"], df["Gene ontology IDs"]):
             all = []
             for go in gos:
@@ -81,7 +78,7 @@ class GODB:
             for i in set(all):
                 tot.append([entry, i])
 
-        prot_gos = pd.DataFrame(tot, columns = ["ID", "GOID"]).drop_duplicated()
+        prot_gos = pd.DataFrame(tot, columns = ["ID", "GOID"]).drop_duplicates()
         prot_gos.to_csv(f"{self.options['folder']}/Protein_gos.csv", index = False)
         pd.DataFrame(self.get_go_names(), columns = ["GOID", "Name"]).to_csv(f"{self.options['folder']}/Go_names.csv", index = False)
-        print("Done Gene Ontologies")
+        logging.info("Extracted Gene Ontologies")

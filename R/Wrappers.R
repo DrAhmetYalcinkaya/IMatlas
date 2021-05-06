@@ -69,7 +69,7 @@ get_graph <- function(filter, neighbours = 0, max_neighbours=Inf, simple = F, om
   if (is.null(env$interactions)) stop("No data loaded. Run 'load_data(config_path)' first.", call. = F)
     df <- data_filter(filter, neighbours, max_neighbours, type, search_mode, omit_lipids)
     if (nrow(df) > 0){
-        graph <- igraph::simplify(igraph::graph_from_data_frame(df, directed = F), edge.attr.comb="mean")
+        graph <- simplify(graph_from_data_frame(df, directed = F), edge.attr.comb="mean")
         graph$main <- filter
         V(graph)$id <- V(graph)$name
         V(graph)$name <- convert_ids_to_names(V(graph)$id)
@@ -98,9 +98,9 @@ get_graph <- function(filter, neighbours = 0, max_neighbours=Inf, simple = F, om
 #'@importFrom dplyr filter select all_of
 #'@export
 get_metabolite_metadata <- function(graph, metadata){
-    df <- igraph::get.data.frame(graph, "vertices") %>%
-        dplyr::filter(type == "Metabolite") %>%
-        dplyr::select(all_of(metadata))
+    df <- get.data.frame(graph, "vertices") %>%
+        filter(type == "Metabolite") %>%
+        select(all_of(metadata))
     return(df)
 }
 
@@ -115,7 +115,8 @@ get_metabolite_metadata <- function(graph, metadata){
 #'@export
 example_graph <- function(omit_lipids = F){
     get_graph("microglial cell activation", type = "Gene Ontology", 
-              neighbours = 0, max_neighbours = Inf, simple = F, omit_lipids=omit_lipids, verbose = T)
+              neighbours = 0, max_neighbours = Inf, simple = F, 
+              omit_lipids=omit_lipids, verbose = T)
 }
 
 #'@title Return a long-format DataFrame with GO-Pvalue combinations per metabolite
@@ -153,24 +154,21 @@ metabolic_process_summary <- function(graph, p=1, closeness = 0){
 #'@importFrom reticulate py_available py_config
 #'@export
 run_preprocessing <- function(config_path="config.yaml"){
- 
+  env <- sys.frame()
   message("This function will run the processing Python scripts. This may take a while (up to 60 min)")
   continue <- readline(prompt = "Do you want to continue? (y/n) ")
   if (tolower(continue) == "y"){
-      if (reticulate::py_available(T)){
+      if (py_available(T)){
         
         env$options <- adjust_folder(yaml::read_yaml(config_path))
         message("Executing Preprocessing scripts, please wait.")
         file <- system.file("Python", "Preprocessing.py", package = "ImmunoMet", mustWork = T)
-        python <- reticulate::py_config()$python
+        python <- py_config()$python
         command <- sprintf("%s %s %s", python, file, config_path)
         system(command)
         message("Testing if new data can be loaded")
 
         load_data(config_path, full=F)
-        #message("Performing final analysis")
-        
-        #calculate_all_node_pvalues(config_path)
         message("Preprocessing succesful")
       } else {
         stop(paste("Preprocessing failed. No Python3 installation was found.",
@@ -184,6 +182,7 @@ run_preprocessing <- function(config_path="config.yaml"){
 #'@title Run calculate all metabolite-go pvalues
 #'@export
 calculate_all_node_pvalues <- function(config_path, order = 1){
+  env <- sys.frame()
   env$options <- adjust_folder(yaml::read_yaml(config_path))
   g <- get_graph("immune system process", verbose = F, simple = T) %>%
     add_closeness() %>%

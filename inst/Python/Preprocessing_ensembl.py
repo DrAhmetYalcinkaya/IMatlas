@@ -4,12 +4,13 @@ import pandas as pd
 import json
 import numpy as np
 from time import sleep
+import logging
 
 class Ensembl:
     """
     This class handles the conversion of Ensembl transcripts to Ensembl proteins as used by StringDB.
     """
-    def __init__(self, options, log):
+    def __init__(self, options):
         print("Connecting with Ensembl DB")
 
         self.server = "http://rest.ensembl.org"
@@ -18,7 +19,6 @@ class Ensembl:
         self.responses = []
         self.submitted_ids = 0
         self.options = options
-        self.log = log
 
     def get_response(self, ids):
         """
@@ -30,10 +30,10 @@ class Ensembl:
                                 data='{ "ids" : %s }' % str(ids).replace("'", '"'))
             self.json = req.json()
             self.submitted_ids += len(ids)
-            print(f"Mapped {self.submitted_ids} out of {len(self.transcripts)}", end="\r")
+            logging.info(f"Mapped {self.submitted_ids} out of {len(self.transcripts)}", end="\r")
             return [[id, self.json[id]["Translation"]["id"]] for id in self.json.keys() if self.json.get(id) is not None and "Translation" in self.json[id].keys()]
         except:
-            print(f"Encounterd a problem with status code {req.status_code}. Trying again in 60 seconds.")
+            logging.error(f"Encounterd a problem with status code {req.status_code}. Trying again in 60 seconds.")
             sleep(60)
             self.get_response(ids)
 
@@ -42,7 +42,6 @@ class Ensembl:
 
         """
         df["Ensembl transcript"] = df["Ensembl transcript"].str.findall(r'(ENST\d+)')
-
         df = df.explode("Ensembl transcript")
         self.transcripts = list(df["Ensembl transcript"])
         return df
@@ -51,7 +50,7 @@ class Ensembl:
         """
 
         """
-        print("Start mapping transcripts to Ensembl Proteins")
+        logging.ingo("Start mapping transcripts to Ensembl Proteins")
         n = 1000
         with ThreadPoolExecutor() as ex:
             futures = [ex.submit(self.get_response, self.transcripts[i:i+n]) 
@@ -62,7 +61,7 @@ class Ensembl:
 
         conv = pd.DataFrame(self.responses, columns = ["Ensembl transcript", "StringDB"])
         conv.set_index("Ensembl transcript", inplace = True, drop = False)
-        print("Completed mapping to Ensembl Proteins")
+        logging.info("Completed mapping to Ensembl Proteins")
         return conv
 
     def get_ensembl_proteins(self, df, mapping):
@@ -76,5 +75,5 @@ class Ensembl:
         indexes = mapping.index.intersection(df.index)
         df = pd.concat([df.loc[indexes], mapping.loc[indexes]["StringDB"]], axis=1, sort=True)
         df.reset_index(drop = True, inplace = True)
-        self.log.write(f"Found {len(df.index)} proteins that were mapped to StringDB identifiers\n")
+        logging.info(f"Found {len(df.index)} proteins that were mapped to StringDB identifiers\n")
         return df

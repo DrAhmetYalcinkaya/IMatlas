@@ -6,15 +6,15 @@ import io
 import zipfile
 import re
 from itertools import combinations
+import logging
 
 class RheaDB:
     """
     This class handles all RheaDB processing. This includes retrieving data and 
     parsing each reaction to get a metabolite-metabolite format.
     """
-    def __init__(self, options, log):
+    def __init__(self, options):
         self.options = options
-        self.log = log
         self.chebi_df = []
             
     def parse_rhea(self, mapping):
@@ -22,12 +22,12 @@ class RheaDB:
         Main method call to start parsing of the RheaDB. Data is retrieved and 
         filtered for duplicates before writing the dataframe to a file.
         """
-        print("Parsing RheaDB")
+        logging.info("Parsing RheaDB")
         with gzip.GzipFile(fileobj=io.BytesIO(self.retrieve_rhea()), mode = "r") as gzipped:
             all = self.parse_gzip(gzipped, mapping)
             df = pd.DataFrame(all, columns = ["From", "To"]).drop_duplicates()
             df.to_csv(f"{self.options['folder']}/Metabolite-metabolite.csv", index = False)
-            self.log.write(f"Wrote {len(df.index)} Metabolite-metabolite interactions to a file")
+            logging.info(f"Wrote {len(df.index)} Metabolite-metabolite interactions to a file")
 
     def retrieve_rhea(self):
         """

@@ -415,5 +415,6 @@ normalized <- function(vec, min=0, max=1){
 #'    y
 #')
 #'@param y List object
+#'@export
 na.omit.list <- function(y) y[!sapply(y, function(x) all(is.na(x)))]
 

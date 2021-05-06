@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 import pip
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 def import_or_install(packages):
     for package, to_install in packages.items():
@@ -11,14 +13,14 @@ def import_or_install(packages):
 
 packages = {"yaml": "pyYaml", "pandas": "pandas", "numpy": "numpy", "zipfile": "zipfile",
     "json": "json", "gzip": "gzip", "requests": "requests", "pathlib": "pathlib",
-    "xml": "xml", "re": "re", "concurrent": "concurrent", "io": "io", "itertools": "itertools",
-    "python-igraph": "python-igraph", "leidenalg": "leidenalg"
+    "xml": "xml", "re": "re", "concurrent": "concurrent", "io": "io", "itertools": "itertools"
 }
 import_or_install(packages)
 
 import os
 import sys
 import yaml
+import logging
 from pathlib import Path
 from Preprocessing_hmdb import HMDB
 from Preprocessing_go import GODB
@@ -39,26 +41,22 @@ def main(config_path):
     with open(config_path) as file: 
         options = yaml.load(file, Loader=yaml.FullLoader)
         Path(options["folder"]).mkdir(parents=True, exist_ok=True)
-    print("Opened Config file.")
+    logging.info("Opened Config file.")
     options['folder'] = options['folder'].rstrip("/")
 
-    log = open(f"{options['folder']}/Log_preprocessing.txt", "w", buffering=1)
+    hmdb_db = HMDB(options)
+    hmdb_db.parse_hmdb()
+    rhea_db = RheaDB(options)
+    rhea_db.parse_rhea(hmdb_db.get_chebi_mapping())
 
-    #hmdb_db = HMDB(options, log)
-    #hmdb_db.parse_hmdb()
-    #rhea_db = RheaDB(options, log)
-    #rhea_db.parse_rhea(hmdb_db.get_chebi_mapping())
-
-    go_db = GODB(options, log)
+    go_db = GODB(options)
     gos = go_db.get_descendants()
-
-    uniprot = Uniprot(options, log)
+    uniprot = Uniprot(options)
     uniprot.retrieve_uniprot_df()
     uniprot.map_transcripts_to_proteins()
-    #uniprot.parse_metadata(hmdb_db.get_chebi_mapping())
+    uniprot.parse_metadata(hmdb_db.get_chebi_mapping())
     df = uniprot.parse_protein_interactions(gos)
     go_db.extract_gos(df) 
-    log.close()
 
 if __name__ == "__main__":
     config_path = "config.yaml"

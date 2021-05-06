@@ -5,15 +5,15 @@ import pandas as pd
 import numpy as np
 import io
 import zipfile
+import logging
 
 class HMDB:
     """ This class chunks an xml file (zipped) into chunks, so that a DOM parser can be used
     It stores only fields by using regex of the fields given
     """
-    def __init__(self, options, log):
+    def __init__(self, options):
         self.files = {}
         self.options = options
-        self.log = log        
         self.mapping = []
 
     def set_variables(self, source, chunk_by, fields, exclude):
@@ -38,7 +38,7 @@ class HMDB:
             if field not in exclude:
                 self.files[field] = open(f"{self.options['folder']}/Metabolite_{field}.csv", "w", encoding="utf-8")
                 self.write(field, ["ID", field])
-                self.log.write(f"Created file {self.options['folder']}/Metabolite_{field}.csv\n")
+                logging.info(f"Created file {self.options['folder']}/Metabolite_{field}.csv\n")
 
     def chunk(self):
         """
@@ -108,15 +108,14 @@ class HMDB:
                                   "class", "kegg_map_id", "super_class", "description", "traditional_iupac",
                                   "biospecimen", "cellular", "name", "pathway", "term"],
                         exclude = ["term", "kegg_map_id", "chebi_id", "description", "traditional_iupac"])
-
-            for n, chunk in enumerate(self.chunk()):
-                print(n, end="\r")
-                terms = {x.text for x in chunk.findall("term")}
-                if ("Biological role" in terms or "Naturally occurring process" in terms) and not self.is_drug(chunk, terms):
-                    count += self.process_metabolite(chunk)
-            self.close()  
-            self.log.write(f"Extracted {count} metabolites out of {n} from HMDB\n")
-            print("Done Metabolite data")
+            with tqdm(desc = "Extracting HMDB") as pbar:
+                for n, chunk in enumerate(self.chunk()):
+                    terms = {x.text for x in chunk.findall("term")}
+                    if ("Biological role" in terms or "Naturally occurring process" in terms) and not self.is_drug(chunk, terms):
+                        count += self.process_metabolite(chunk)
+                    pbar.update(1)
+        self.close()  
+        logging.info(f"Extracted {count} metabolites out of {n} from HMDB\n")
 
     
     def process_metabolite(self, chunk):
