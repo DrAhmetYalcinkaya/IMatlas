@@ -20,6 +20,8 @@ class Ensembl:
         self.headers = { "Content-Type" : "application/json", "Accept" : "application/json"}
         self.responses = []
         self.options = options
+        self.mapping_loc = str(os.path.realpath(__file__)).replace(r'Python\Preprocessing_ensembl.py', "").replace(r'Python/Preprocessing_ensembl.py', "") + "extdata/Ensembl_Mapping.csv"
+
 
     def get_response(self, ids):
         """
@@ -44,8 +46,7 @@ class Ensembl:
         df["Ensembl transcript"] = df["Ensembl transcript"].str.findall(r'(ENST\d+)')
         df = df.explode("Ensembl transcript")
         transcripts = list(df["Ensembl transcript"])
-        mapping_loc = str(os.path.realpath(__file__)).replace(r'Python\Preprocessing_ensembl.py', "").replace(r'Python/Preprocessing_ensembl.py', "") + "extdata\Ensembl_Mapping.csv"
-        mapping = pd.read_csv(mapping_loc)
+        mapping = pd.read_csv(self.mapping_loc)
         known = list(mapping["Ensembl transcript"])
         self.transcripts = list(set(transcripts) - set(known))
         return df
@@ -55,15 +56,14 @@ class Ensembl:
 
         """
         logging.info("Start mapping transcripts to Ensembl Proteins")
-        mapping_loc = str(os.path.realpath(__file__)).replace(r'Python\Preprocessing_ensembl.py', "") + "extdata\Ensembl_Mapping.csv"
         n = 500
         for i in range(0, len(self.transcripts), n):
             results = self.get_response(self.transcripts[i:i+n])
             conv = pd.DataFrame(results, columns = ["Ensembl transcript", "StringDB"])
-            conv.to_csv(mapping_loc, mode="a", header=False, index = False)
+            conv.to_csv(self.mapping_loc, mode="a", header=False, index = False)
             
         logging.info("Completed mapping to Ensembl Proteins")
-        conv = pd.read_csv(mapping_loc).drop_duplicates()
+        conv = pd.read_csv(self.mapping_loc).drop_duplicates()
         return conv.set_index("Ensembl transcript", drop = False)
 
     def get_ensembl_proteins(self, df, mapping):
