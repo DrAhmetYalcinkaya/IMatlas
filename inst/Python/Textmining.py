@@ -28,9 +28,8 @@ class TextMining:
     """
     This class handles all text mining related searches. 
     """
-    def __init__(self, options, log, type=""):
+    def __init__(self, options, type=""):
         self.options = options
-        self.log = log
         self.type = type
         self.processed = 0
         self.total = 0
@@ -118,9 +117,8 @@ class EBI:
     """
     This class handles all requests that are Gene Ontology (GO) related. 
     """
-    def __init__(self, options, log):
+    def __init__(self, options):
         self.options = options
-        self.log = log
         self.n = 50
         self.base_url = "https://www.ebi.ac.uk/QuickGO/services/ontology/go/terms"
 

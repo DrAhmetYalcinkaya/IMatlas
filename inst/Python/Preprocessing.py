@@ -2,7 +2,9 @@
 
 import pip
 import warnings
+from pandas.core.common import SettingWithCopyWarning
 warnings.simplefilter(action='ignore', category=FutureWarning)
+warnings.simplefilter(action='ignore', category=SettingWithCopyWarning)
 
 def import_or_install(packages):
     for package, to_install in packages.items():
@@ -43,8 +45,7 @@ def main(config_path):
         Path(options["folder"]).mkdir(parents=True, exist_ok=True)
     logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
     logging.info("Opened Config file.")
-    options['folder'] = options['folder'].rstrip("/")
-
+    options['folder'] = options['folder']
     hmdb_db = HMDB(options)
     hmdb_db.parse_hmdb()
     rhea_db = RheaDB(options)

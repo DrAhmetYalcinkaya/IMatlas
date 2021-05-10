@@ -27,9 +27,9 @@ class Uniprot:
         """
         self.df = pd.read_csv("https://www.uniprot.org/uniprot/?query=*&format=tab&columns=id,protein%20names,comment(COFACTOR),ec,database(TCDB)," + \
         "go-id,database(Ensembl),database(Reactome)&fil=organism:%22Homo%20sapiens%20(Human)%20[9606]%22%20AND%20reviewed:yes", sep="\t")
-        logging.info(f"Found {len(self.df.index)} proteins in the Uniprot database\n")
+        logging.info(f"Found {len(self.df.index)} proteins in the Uniprot database")
         self.df = self.df.dropna(subset = ["Ensembl transcript"])
-        logging.info(f"Found {len(self.df.index)} proteins with a known transcript\n")
+        logging.info(f"Found {len(self.df.index)} proteins with a known transcript")
         self.df.reset_index(drop = True, inplace = True)
         self.extract_protein_names() 
 
@@ -60,21 +60,21 @@ class Uniprot:
         df = df.explode("Cross-reference (Reactome)")  
         df.columns = ["ID", "Pathway"]
         df.to_csv(f"{self.options['folder']}/Protein_reactome.csv", index = False)
-        logging.info(f"Found {len(df.index)} protein pathways\n")
+        logging.info(f"Found {len(df.index)} protein pathways")
 
 
     def extract_transporter(self):
         """
         This method extracts transporter proteins from Uniprot.
         """
-        logging.info("\nStart extracting transporter proteins\n")
+        logging.info("\nStart extracting transporter proteins")
         df = self.df.dropna(subset=["Cross-reference (TCDB)"])
         df = df[["Entry", "Cross-reference (TCDB)"]]
         df.columns = ["ID", "Transporter"]
         df["Transporter"] = df["Transporter"].str.findall(r'(\d+\.[A-Z]+\.\d+\.\d+\.\d+)')
         df = df.explode("Transporter")
         df.to_csv(f"{self.options['folder']}/Protein_transporter.csv", index = False)
-        logging.info(f"Found {len(df.index)} transporter proteins\n")
+        logging.info(f"Found {len(df.index)} transporter proteins")
 
 
     def extract_protein_names(self):
@@ -91,7 +91,7 @@ class Uniprot:
         df = pd.concat([df["Entry"], names, synonyms], axis = 1)
         df.columns = ["ID", "Name", "Synonym"]
         df.to_csv(f"{self.options['folder']}/Protein_names.csv", index = False, quoting=csv.QUOTE_ALL)
-        logging.info(f"written {len(df.index)} protein names to its file\n")
+        logging.info(f"written {len(df.index)} protein names to its file")
 
     def extract_ec_numbers(self):
         """
@@ -104,7 +104,7 @@ class Uniprot:
         df = df.explode("Number")
         df.dropna(subset=["Number"], inplace=True)
         df.to_csv(f"{self.options['folder']}/Ec_numbers.csv", index = False)
-        logging.info(f"Found {len(df.index)} proteins with a EC number\n")
+        logging.info(f"Found {len(df.index)} proteins with a EC number")
 
     def extract_cofactor(self, conv):
         """
@@ -123,7 +123,7 @@ class Uniprot:
         df["Cofactor"].replace('', np.nan, inplace=True)
         df.dropna(subset=["Cofactor"], inplace=True)
         df.to_csv(f"{self.options['folder']}/Cofactors.csv", index = False)
-        logging.info(f"Found {len(df.index)} protein-metabolite cofactors combinations\n")
+        logging.info(f"Found {len(df.index)} protein-metabolite cofactors combinations")
 
     def parse_protein_interactions(self, gos):
         """

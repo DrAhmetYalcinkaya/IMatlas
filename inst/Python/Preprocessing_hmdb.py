@@ -39,7 +39,7 @@ class HMDB:
             if field not in exclude:
                 self.files[field] = open(f"{self.options['folder']}/Metabolite_{field}.csv", "w", encoding="utf-8")
                 self.write(field, ["ID", field])
-                logging.info(f"Created file {self.options['folder']}/Metabolite_{field}.csv")
+        logging.info(f"Created necessary files")
 
     def chunk(self):
         """

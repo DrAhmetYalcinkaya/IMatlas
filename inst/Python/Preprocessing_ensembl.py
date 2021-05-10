@@ -5,6 +5,8 @@ import json
 import numpy as np
 from time import sleep
 import logging
+from tqdm import tqdm
+import os
 
 class Ensembl:
     """
@@ -17,7 +19,6 @@ class Ensembl:
         self.ext = "/lookup/id/Translation"
         self.headers = { "Content-Type" : "application/json", "Accept" : "application/json"}
         self.responses = []
-        self.submitted_ids = 0
         self.options = options
 
     def get_response(self, ids):
@@ -29,12 +30,11 @@ class Ensembl:
             req = requests.post(self.server + self.ext, headers=self.headers, params={"expand": True, "format": "condensed"}, 
                                 data='{ "ids" : %s }' % str(ids).replace("'", '"'))
             self.json = req.json()
-            self.submitted_ids += len(ids)
-            logging.info(f"Mapped {self.submitted_ids} out of {len(self.transcripts)}", end="\r")
             return [[id, self.json[id]["Translation"]["id"]] for id in self.json.keys() if self.json.get(id) is not None and "Translation" in self.json[id].keys()]
         except:
             logging.warning(f"Encounterd a problem with status code {req.status_code}. Trying again in 60 seconds.")
             sleep(60)
+            print(ids)
             self.get_response(ids)
 
     def set_transcripts(self, df):
@@ -43,7 +43,11 @@ class Ensembl:
         """
         df["Ensembl transcript"] = df["Ensembl transcript"].str.findall(r'(ENST\d+)')
         df = df.explode("Ensembl transcript")
-        self.transcripts = list(df["Ensembl transcript"])
+        transcripts = list(df["Ensembl transcript"])
+        mapping_loc = str(os.path.realpath(__file__)).replace(r'Python\Preprocessing_ensembl.py', "") + "extdata\Ensembl_Mapping.csv"
+        mapping = pd.read_csv(mapping_loc)
+        known = list(mapping["Ensembl transcript"])
+        self.transcripts = list(set(transcripts) - set(known))
         return df
 
     def get_transcript_mapping(self):
@@ -51,18 +55,16 @@ class Ensembl:
 
         """
         logging.info("Start mapping transcripts to Ensembl Proteins")
-        n = 1000
-        with ThreadPoolExecutor() as ex:
-            futures = [ex.submit(self.get_response, self.transcripts[i:i+n]) 
-                        for i in range(0, len(self.transcripts), n)]
-
-            for f in futures:
-                self.responses += f.result()
-
-        conv = pd.DataFrame(self.responses, columns = ["Ensembl transcript", "StringDB"])
-        conv.set_index("Ensembl transcript", inplace = True, drop = False)
+        mapping_loc = str(os.path.realpath(__file__)).replace(r'Python\Preprocessing_ensembl.py', "") + "extdata\Ensembl_Mapping.csv"
+        n = 500
+        for i in range(0, len(self.transcripts), n):
+            results = self.get_response(self.transcripts[i:i+n])
+            conv = pd.DataFrame(results, columns = ["Ensembl transcript", "StringDB"])
+            conv.to_csv(mapping_loc, mode="a", header=False, index = False)
+            
         logging.info("Completed mapping to Ensembl Proteins")
-        return conv
+        conv = pd.read_csv(mapping_loc).drop_duplicates()
+        return conv.set_index("Ensembl transcript", drop = False)
 
     def get_ensembl_proteins(self, df, mapping):
         """
