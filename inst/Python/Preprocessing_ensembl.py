@@ -44,7 +44,7 @@ class Ensembl:
         df["Ensembl transcript"] = df["Ensembl transcript"].str.findall(r'(ENST\d+)')
         df = df.explode("Ensembl transcript")
         transcripts = list(df["Ensembl transcript"])
-        mapping_loc = str(os.path.realpath(__file__)).replace(r'Python\Preprocessing_ensembl.py', "") + "extdata\Ensembl_Mapping.csv"
+        mapping_loc = str(os.path.realpath(__file__)).replace(r'Python\Preprocessing_ensembl.py', "").replace(r'Python/Preprocessing_ensembl.py', "") + "extdata\Ensembl_Mapping.csv"
         mapping = pd.read_csv(mapping_loc)
         known = list(mapping["Ensembl transcript"])
         self.transcripts = list(set(transcripts) - set(known))
