@@ -25,9 +25,9 @@ load_data <- function(config="config.yaml", neighbours=0, confidence=0, full=T, 
     prot_file <- prot_files[[names(prot_files)[neighbours + 1]]]
     env$pp_confidence <- reactiveVal(confidence)
     load_interaction_data(prot_file, confidence)
-    if (full){
-      env$go_metabolite <- read_file("go_metabolite.csv")
-    }
+    #if (full){
+    #  env$go_metabolite <- read_file("go_metabolite.csv")
+    #}
     
     env$offspring <- as.list(GO.db::GOBPOFFSPRING)
     env$is_reactive = F
