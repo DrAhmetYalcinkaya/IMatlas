@@ -48,9 +48,10 @@ adjust_folder <- function(options){
 #'@importFrom data.table fread setkeyv
 #'@noRd
 read_file <- function(source, index_column){
+  file <- source
   source <- paste0(env$options$folder, source)
   if (!file.exists(source)){
-    stop(paste0(sprintf("Data files not found at location: '%s'. ", env$options$folder),
+    stop(paste0(sprintf("Could not find file '%s' at location '%s' ", file, env$options$folder),
                 "Consider executing 'run_preprocessing(config_path)' first."), call. = F)
   }
   df <- fread(source, sep = ",", header = T)
