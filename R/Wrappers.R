@@ -4,18 +4,27 @@
 #'be used by other functions inside this package.
 #'@usage load_data(
 #'    config,
-#'    neighbours = 0
+#'    neighbours = 0,
+#'    confidence = 0,
+#'    full = TRUE,
+#'    verbose = TRUE
 #')
 #'@param config String path to a YAML configuration file
 #'@param neighbours Integer value representing the number of 'steps' allowed for protein-protein interactions
+#'@param confidence placeholder
+#'@param full placeholder
+#'@param verbose placeholder
 #'@importFrom yaml read_yaml
 #'@importFrom GO.db GOBPOFFSPRING 
 #'@importFrom AnnotationDbi Term
 #'@importFrom pbapply pboptions
+#'@import logging
 #'@export
-load_data <- function(config="config.yaml", neighbours=0, confidence=0, full=T, verbose=T){
+load_data <- function(config="config.yaml", neighbours=0, confidence=0, 
+                      full=TRUE, verbose=TRUE){
+    basicConfig()
     env <<- sys.frame()
-    usage_order <<- reactiveVal(1)
+    env$usage_order <- reactiveVal(1)
     env$options <- adjust_folder(yaml::read_yaml(config))
     env$pvalue_filter <- reactiveVal(1)
     prot_files <- list("Direct" = "Protein-protein.csv", 
@@ -32,9 +41,9 @@ load_data <- function(config="config.yaml", neighbours=0, confidence=0, full=T, 
     env$offspring <- as.list(GO.db::GOBPOFFSPRING)
     env$is_reactive = F
     if (verbose){
-      message(sprintf("Number of metabolite-protein interactions: %s", nrow(env$pm_interactions)))
-      message(sprintf("Number of metabolite-metabolite interactions: %s", nrow(env$mm_interactions)))
-      message(sprintf("Number of protein-protein interactions: %s", nrow(env$pp_interactions)))
+      loginfo(sprintf("Number of metabolite-protein interactions: %s", nrow(env$pm_interactions)))
+      loginfo(sprintf("Number of metabolite-metabolite interactions: %s", nrow(env$mm_interactions)))
+      loginfo(sprintf("Number of protein-protein interactions: %s", nrow(env$pp_interactions)))
     }
 }
 
@@ -43,43 +52,50 @@ load_data <- function(config="config.yaml", neighbours=0, confidence=0, full=T, 
 #'    filter,
 #'    neighbours = 0,
 #'    max_neighbours = Inf,
-#'    type = "Gene Ontology",
 #'    simple = F,
-#'    search_mode = "Interacts"
+#'    omit_lipids = F,
+#'    type = "Immune process by name",
+#'    search_mode = "Interacts",
+#'    verbose = T
 #')
 #'@param filter String containing the search term.
 #'@param neighbours Integer containing the number of neighbours to be found
 #'@param max_neighbours Integer representing the maximum number of edges for each neighbour
-#'@param type String containing the type of search.
 #'@param simple Boolean value indicating to return a barebone graph or including metadata.
+#'@param omit_lipids Boolean value if lipids should be omitted
+#'@param type String containing the type of search.
 #'@param search_mode String of either 'Interacts' or 'Between'. Interacts finds the first neighbour
 #'of the given search, while Between only returns interactions between the proteins / metabolites given.
+#'@param verbose Boolean value, should info be printed?
 #'@examples
 #'# Construct a GO graph
+#'\dontrun{
 #'g <- get_graph("microglial cell activation")
 #'g <- get_graph("microglial cell activation", 0, "Gene Ontology")
-#'
 #'# Construct a graph using Metabolites and/or Proteins
 #'g <- get_graph("L-Asparagine", type = "Metabolites/Proteins")
+#'}
 #'@importFrom igraph simplify graph_from_data_frame V
 #'@export
 get_graph <- function(filter, neighbours = 0, max_neighbours=Inf, simple = F, omit_lipids = F,
-                      type = "Gene Ontology", search_mode = "Interacts", verbose = T){
+                      type = "Immune process by name", search_mode = "Interacts", verbose = T){
+  if (verbose) loginfo(sprintf("Build graph: %s", paste(filter, sep = ", ")))
   env <- sys.frame()
   if (is.null(env$interactions)) stop("No data loaded. Run 'load_data(config_path)' first.", call. = F)
     df <- data_filter(filter, neighbours, max_neighbours, type, search_mode, omit_lipids)
     if (nrow(df) > 0){
-        graph <- simplify(graph_from_data_frame(df, directed = F), edge.attr.comb="mean")
+        graph <- simplify(graph_from_data_frame(df, directed = F), edge.attr.comb = "mean")
         graph$main <- filter
         V(graph)$id <- V(graph)$name
         V(graph)$name <- convert_ids_to_names(V(graph)$id)
         if (!simple) graph <- to_graph(graph, type, verbose)
         if (verbose){
-          message(sprintf("Search filter: %s",  paste(graph$main, collapse = ", ")))
-          message(sprintf("Found %d nodes & %d edges",  vcount(graph), ecount(graph)))
+          loginfo(sprintf("Search filter: %s",  paste(graph$main, collapse = ", ")))
+          loginfo(sprintf("Found %d nodes & %d edges",  vcount(graph), ecount(graph)))
         }
         return(graph)
-    } 
+    }
+    logwarn("No graph could be build, returning NA")
     NA
 }
 
@@ -92,12 +108,15 @@ get_graph <- function(filter, neighbours = 0, max_neighbours=Inf, simple = F, om
 #'@param metadata String containing column name of metadata to obtain
 #'@examples
 #'# Get GOs associated with metabolites
+#'\dontrun{
 #'g <- get_graph("microglial cell activation")
 #'get_metabolite_metadata(g, "go")
+#'}
 #'@importFrom igraph get.data.frame
 #'@importFrom dplyr filter select all_of
 #'@export
 get_metabolite_metadata <- function(graph, metadata){
+  type <- NULL
     df <- get.data.frame(graph, "vertices") %>%
         filter(type == "Metabolite") %>%
         select(all_of(metadata))
@@ -110,11 +129,13 @@ get_metabolite_metadata <- function(graph, metadata){
 #')
 #'@param omit_lipids Boolean value
 #'@examples
+#'\dontrun{
 #'graph <- example_graph()
 #'plot(graph)
+#'}
 #'@export
 example_graph <- function(omit_lipids = F){
-    get_graph("microglial cell activation", type = "Gene Ontology", 
+    get_graph("microglial cell activation", type = "Immune process by name", 
               neighbours = 0, max_neighbours = Inf, simple = F, 
               omit_lipids=omit_lipids, verbose = T)
 }
@@ -122,35 +143,42 @@ example_graph <- function(omit_lipids = F){
 #'@title Return a long-format DataFrame with GO-Pvalue combinations per metabolite
 #'@usage metabolic_process_summary(
 #'    graph,
-#'    threshold = 1
+#'    p = 1,
+#'    centrality = 0
 #')
 #'@param graph igraph object 
+#'@param p placeholder
+#'@param centrality placeholder
 #'@export
-metabolic_process_summary <- function(graph, p=1, closeness = 0){
-  mets <- get_metabolite_vertice_ids(graph)
-  df <- NULL
-  if ("go" %in% names(vertex.attributes(graph))){
-    df <- do.call(rbind, lapply(mets, function(x){
-      cbind(HMDB = V(graph)[x]$id,
-            Metabolite = V(graph)[x]$name,
-            Closeness = V(graph)[x]$closeness,
-            V(graph)[[x]]$go
-      )
-    })) 
-
-    df <- cbind(df, Graph_pvalue = graph$go[df$GO],  GO_Name = get_go_names(df$GO))
-    df <- df[Graph_pvalue <= p & pvalue <= p & Closeness >= closeness,]
-    df <- df[order(df$Graph_pvalue, df$pvalue, -df$Closeness),]
-  } else{
-    warning("No Gene Ontologies found, skipping process summary")
+metabolic_process_summary <- function(graph, p=1, centrality = 0){
+  if (is.igraph(graph)){
+    Graph_pvalue <- pvalue <- Centrality <- NULL
+    mets <- get_metabolite_vertice_ids(graph)
+    df <- NULL
+    if ("go" %in% names(vertex.attributes(graph))){
+      df <- do.call(rbind, lapply(mets, function(x){
+        cbind(HMDB = V(graph)[x]$id,
+              Metabolite = V(graph)[x]$name,
+              Centrality = V(graph)[x]$Centrality,
+              V(graph)[[x]]$go
+        )
+      })) 
+  
+      df <- cbind(df, Graph_pvalue = graph$go[df$GO],  GO_Name = get_go_names(df$GO))
+      df <- df[Graph_pvalue <= p & pvalue <= p & Centrality >= centrality,]
+      df <- df[order(df$Graph_pvalue, df$pvalue, -df$Centrality),]
+    } else{
+      warning("No Gene Ontologies found, skipping process summary")
+    }
+    df
   }
-  df
 }
 
 #'@title Run Preprocessing
 #'@usage run_preprocessing(
 #'    config_path = "config.yaml"
 #')
+#'@param config_path placeholder
 #'@importFrom reticulate py_available py_config
 #'@export
 run_preprocessing <- function(config_path="config.yaml"){
@@ -179,28 +207,11 @@ run_preprocessing <- function(config_path="config.yaml"){
   }
 }
 
-#'@title Run calculate all metabolite-go pvalues
-#'@export
-calculate_all_node_pvalues <- function(config_path, order = 1){
-  env <- sys.frame()
-  env$options <- adjust_folder(yaml::read_yaml(config_path))
-  g <- get_graph("immune system process", verbose = F, simple = T) %>%
-    add_closeness() %>%
-    add_node_pvalues(order = order) 
-  
-  mets <- get_metabolite_vertice_ids(g)
-  gos <- V(g)[mets]$go
-  names(gos) <- V(g)[mets]$id
-  df <- cbind(stack(sapply(gos, simplify = F, USE.NAMES = T, names)), stack(gos)[,1])
-  colnames(df) <- c("GO", "Metabolite", "pvalue")
-  df <- cbind(df, Closeness = V(g)[df$Metabolite]$closeness)
-  write.csv(df, paste0(options$folder, "Metabolite-pvalues_accurate.csv", row.names = F))
-}
-
 #'@title Run the text mining
 #'@usage run_textmining(
 #'    config_path = "config.yaml"
 #')
+#'@param config_path placeholder
 #'@export
 run_textmining <- function(config_path="config.yaml"){
   env <- sys.frame()
@@ -220,7 +231,15 @@ run_textmining <- function(config_path="config.yaml"){
 }
 
 #'@title Perform text mining analysis
+#'@usage textmining_analysis(
+#'    config_path = "config.yaml",
+#'    font = 18
+#')
+#'@param config_path placeholder
+#'@param font placeholder
 #'@importFrom networkD3 sankeyNetwork
+#'@importFrom data.table fread
+#'@importFrom stats aggregate
 #'@export
 textmining_analysis <- function(config_path="config.yaml", font = 18){
   env <- sys.frame()
@@ -234,9 +253,9 @@ textmining_analysis <- function(config_path="config.yaml", font = 18){
   }
 
   graph <- get_graph("immune system process", simple = T, verbose = F) %>%
-    add_gos() %>%
-    add_node_pvalues() %>%
-    induced.subgraph(V(.)[get_metabolite_vertice_ids(.)])
+    add_gos(env$protein_go_df) %>%
+    add_node_pvalues(env$protein_go_df) %>%
+    filter_metabolites()
   
   list <- sapply(V(graph)$go, USE.NAMES = T, function(x) x$GO)
   
@@ -249,7 +268,7 @@ textmining_analysis <- function(config_path="config.yaml", font = 18){
   
   text_ext <- unique(fread(source, sep = "\t", data.table = F)[,c(1, 2)])
   colnames(text_ext) <- c("GO", "Metabolite")
-  text_ext$GO <- get_go_ids_by_go(text_ext$GO)
+  text_ext$GO <- get_go_ids(text_ext$GO)
   text_ext$Metabolite <- get_metabolite_ids(text_ext$Metabolite)
   
   atlas <- unique(go_metabolite$Metabolite)
@@ -269,10 +288,10 @@ textmining_analysis <- function(config_path="config.yaml", font = 18){
   pm_interactions <- read_file("Metabolite_uniprot_id.csv")
   colnames(pm_interactions) <- c("From", "To")
   
-  has_interaction <- excl_tm[excl_tm %in% c(t(mm_interactions), pm_interactions$From)]
+  has_interaction <- excl_tm[excl_tm %in% c(t(env$mm_interactions), pm_interactions$From)]
   no_interaction <- excl_tm[!excl_tm %in% has_interaction]
   
-  mm_interaction <- has_interaction[has_interaction %in% c(t(mm_interactions))]
+  mm_interaction <- has_interaction[has_interaction %in% c(t(env$mm_interactions))]
   pm_interaction <- has_interaction[has_interaction %in% pm_interactions$From]
   
   both_interaction <- intersect(mm_interaction, pm_interaction)
@@ -361,7 +380,8 @@ textmining_analysis <- function(config_path="config.yaml", font = 18){
   TP <- length(both) # TP
   FP <- length(excl_atlas) # FP
   FN <- length(excl_tm) # FN
-  TN <- met_superclass %>% 
+  super_class <- ID <- NULL
+  TN <- env$met_superclass %>% 
     filter(super_class != "Lipids and lipid-like molecules") %>% 
     filter(!ID %in% c(excl_atlas, excl_tm, both)) %>%
     nrow()
@@ -374,9 +394,8 @@ textmining_analysis <- function(config_path="config.yaml", font = 18){
   TP <- sum(paste(go_metabolite$GO, go_metabolite$Metabolite) %in% paste(text_ext$GO, text_ext$Metabolite))
   FP <- sum(!paste(go_metabolite$GO, go_metabolite$Metabolite) %in% paste(text_ext$GO, text_ext$Metabolite))
   FN <- sum(!paste(text_ext$GO, text_ext$Metabolite) %in% paste(go_metabolite$GO, go_metabolite$Metabolite))
-  TN <- length(unique(text_ext$Metabolite)) * nrow(go_name_df) - TP - FP - FN
+  TN <- length(unique(text_ext$Metabolite)) * nrow(env$go_name_df) - TP - FP - FN
   
   metabolite_go <- confusion_table(TP, FP, FN, TN)
   list(plot = plot, metabolite_conf = metabolites, metabolite_go_conf = metabolite_go)
 }
-

@@ -10,10 +10,10 @@
 ui.top_row <- function(suffix){
   return(fluidRow(id="search-row",
                   column(1),
-                  column(width = 2, selectInput(paste0("mode", suffix), label = "Mode", 
-                                                choices = c("Identifiers", "Metabolites/Proteins", "Gene Ontology", "GO Simple", 
-                                                            "Pathways", "Superclasses", "Classes"), 
-                                                selected = "Targets", multiple = F)),
+                  column(width = 2, selectInput(paste0("mode", suffix), label = "Input", 
+                                                choices = c("Metabolite by HMDB identifier", "Metabolites by name", "Immune process by name", "Immune process by name (without proteins)", 
+                                                            "Biochemical pathway by name", "Metabolite superclass by name", "Metabolite class by name"), 
+                                                selected = "Metabolite by HMDB identifier", multiple = F)),
                   column(width = 4, selectizeInput(paste0("filter", suffix), label = "Data", choices = NULL, multiple = T, 
                                                    width = "100%", options = list(placeholder = 'Select data of interest'))),
                   column(1, div(class = 'action', actionButton(paste0("settings_button", suffix), "Settings", width = "100%"))),
@@ -37,7 +37,8 @@ side_bar_menu <- function(){
     sidebarMenu(id = "tabs",
         menuItem("Dashboard", tabName = "home", icon = icon("home")),
         menuItem("Data", tabname = "dataTab", icon=icon("database"), 
-                 selectInput("dataid", label="Select Data", choices = list(StringDB = c("Direct", "First Indirect", "Second Indirect")), 
+                 selectInput("dataid", label="Select Data", 
+                             choices = list(StringDB = c("Direct", "First Indirect", "Second Indirect")), 
                              multiple = F, selected = "Direct"), div(id = "importspace"),
                  actionButton("confirmData", "Confirm Selection", width = "90%"), div(id = "importspace")),
         menuItem("Results", tabName = "network", icon = icon("project-diagram")),
@@ -45,12 +46,8 @@ side_bar_menu <- function(){
                  fileInput("file1", "Choose CSV File", width = "100%", multiple = FALSE, accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv")),
                  selectInput("typeid", label = "Type", choices = c("HMDB", "ChEBI", "Metabolite/Protein names"), selected = "HMDB", multiple = F),
                  div(id = "importspace"), actionButton("confirm", "Confirm Selection", width = "90%"), div(id = "importspace")), 
-        menuItem("About", tabName = "about", icon = icon("info")),
-        menuItem("Help", icon = icon("question"), 
-                 menuSubItem("Getting started", tabName = "getting-started"), 
-                 menuSubItem("Controls", tabName = "controls"),
-                 menuSubItem("Advanced topics", tabName = "advanced-topics"))
-  )
+        menuItem("Help", tabName = "help", icon = icon("info"))
+    )
 }
 
 
@@ -60,12 +57,12 @@ side_bar_menu <- function(){
 #' @importFrom waiter use_waiter
 #' @importFrom plotly plotlyOutput
 #' @importFrom DT dataTableOutput
+#' @importFrom shinyalert useShinyalert
 #'@noRd
 ui <- function(){
-  version <- "2.0"
-  dashboardPage(title = paste0("Immuno-Metabolome Atlas ", version),
+  dashboardPage(title = "Immuno-Metabolome Atlas",
                 dashboardHeader(title="", titleWidth = 300, disable = T),
-                dashboardSidebar(width = 300, useShinyjs(), use_waiter(), shinyjs::hidden(div(id = "main_menu", side_bar_menu()))),
+                dashboardSidebar(width = 300, useShinyjs(), use_waiter(), useShinyalert(), shinyjs::hidden(div(id = "main_menu", side_bar_menu()))),
                 dashboardBody(
                   shinyjs::hidden(
                     div(id = "main_page",
@@ -74,7 +71,7 @@ ui <- function(){
                         tabItems(
                           tabItem(tabName = "home", div(id="dashboardTab", 
                                                         fluidRow(div(class = "dashboard_head1"), align = "center", column(width = 1),
-                                                                 column(width = 8, hr(), h1(paste("Immuno-Metabolome Atlas", version)),
+                                                                 column(width = 8, hr(), h1("Immuno-Metabolome Atlas"),
                                                                         div(id="subtitle", "The resource of interactions in the immune system"), hr()),
                                                                  column(width = 1)),
                                                         div(class = "dashboard_head2"),
@@ -95,7 +92,7 @@ ui <- function(){
                           ),
                           tabItem(tabName = "network", header_row("Results", ""),
                                   ui.top_row("Graph"), 
-                                  div(style = "height: 1vw;"),
+                                  div(style = "height: 2vw;"),
                                   tabsetPanel(type = "tabs", id="loading", 
                                               tabPanel("Statistics", 
                                                        div(style = "width: 84vw; display: flex;",
@@ -106,13 +103,13 @@ ui <- function(){
                                                        #)
                                                        ),
                                             
-                                              tabPanel("Network", div(style = "width: 84vw;", plotlyOutput("graph", height = "100vh") %>% withSpinner(4, color = "#0dc5c1"))),
-                                              tabPanel("Heatmap", div(style = "width: 80vw; height: 90vh; margin-top: 1%;", plotlyOutput("heatmapplot", height = "70vh") %>% withSpinner(4, color = "#0dc5c1"))),
+                                              tabPanel("Network", div(style = "width: 75vw;", plotlyOutput("graph", height = "100vh") %>% withSpinner(4, color = "#0dc5c1"))),
+                                              tabPanel("Heatmap", div(style = "width: 75vw; height: 90vh; margin-top: 1%;", plotlyOutput("heatmapplot", height = "70vh") %>% withSpinner(4, color = "#0dc5c1"))),
                                               tabPanel("Data", 
                                                        tabsetPanel(type = "pills",
-                                                                   tabPanel("Proteins/Metabolites", column(10, div(style = "margin-top: 2%; background-color:white;", DT::dataTableOutput("datatable_nodes")))),
-                                                                   tabPanel("Interactions", column(10, div(style = "margin-top: 2%; background-color:white;", DT::dataTableOutput("datatable_edges")))),
-                                                                   tabPanel("Processes", column(10, div(style = "margin-top: 2%; background-color:white;", DT::dataTableOutput("datatable_processes"))))
+                                                                   tabPanel("Proteins/Metabolites", column(8, div(style = "margin-top: 2%; background-color:white;", DT::dataTableOutput("datatable_nodes")))),
+                                                                   tabPanel("Interactions", column(8, div(style = "margin-top: 2%; background-color:white;", DT::dataTableOutput("datatable_edges")))),
+                                                                   tabPanel("Processes", column(8, div(style = "margin-top: 2%; background-color:white;", DT::dataTableOutput("datatable_processes"))))
                                                                    ) 
                                                        )
                                               
@@ -120,10 +117,8 @@ ui <- function(){
                                   )
                                   
                           ),
-                          tabItem(tabName = "about", header_row("About", "Explanations about this app"), fluidRow(column(1), column(8, uiOutput("about_content")))),
-                          tabItem("getting-started", header_row("Getting started", "Instructions about how to use this app."), fluidRow(column(1), column(8, uiOutput("getting_started")))),
-                          tabItem("controls", header_row("Controls", "How to adjust visualizations."), fluidRow(column(1), column(8, uiOutput("controls")))),
-                          tabItem("advanced-topics", header_row("Advanced topics", "Explanations about algorithms implemented."), fluidRow(column(1), column(8, uiOutput("advanced_topics"))))
+                          
+                          tabItem(tabName = "help", header_row("README", ""), column(8, htmlOutput("readme")))
                         )
                     )
                   )

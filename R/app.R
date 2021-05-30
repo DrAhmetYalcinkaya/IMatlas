@@ -2,7 +2,9 @@
 #'@usage run_shiny()
 #'@examples
 #'# Start the Atlas in your browser
+#'\dontrun{
 #'run_shiny()
+#'}
 #'@rawNamespace import(shiny, except = c(dataTableOutput, renderDataTable))
 #'@export
 run_shiny <- function(){

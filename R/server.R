@@ -1,22 +1,23 @@
 default_settings <- function(){
-  col_met <<- reactiveVal("#2c712d")
-  col_pro <<- reactiveVal("#FF9933")
-  col_enz <<- reactiveVal("red")
-  col_tra <<- reactiveVal("green")
-  col_edge <<- reactiveVal("black")
-  col_cofactor <<- reactiveVal("red")
-  col_go <<- reactiveVal("pink")
-  graph_filter <<- reactiveVal()
-  neighbours <<- reactiveVal(0)
-  neighbour_edges <<- reactiveVal(10)
-  size <<- reactiveVal(12)
-  search_mode <<- reactiveVal("Interacts")
-  pp_confidence <<- reactiveVal(700)
-  omitting_lipids <<- reactiveVal(TRUE)
-  usage_order <<- reactiveVal(1)
+  settings <- sys.frame()
+  settings$col_met <- reactiveVal("#2c712d")
+  settings$col_pro <- reactiveVal("#FF9933")
+  settings$col_enz <- reactiveVal("red")
+  settings$col_tra <- reactiveVal("green")
+  settings$col_edge <- reactiveVal("black")
+  settings$col_cofactor <- reactiveVal("red")
+  settings$col_go <- reactiveVal("pink")
+  settings$graph_filter <- reactiveVal()
+  settings$neighbours <- reactiveVal(0)
+  settings$neighbour_edges <- reactiveVal(10)
+  settings$size <- reactiveVal(12)
+  settings$search_mode <- reactiveVal("Interacts")
+  settings$pp_confidence <- reactiveVal(700)
+  settings$omitting_lipids <- reactiveVal(TRUE)
+  settings$usage_order <- reactiveVal(1)
 }
 
-confirm_click <- function(input){
+confirm_click <- function(input, prot_files, choices){
   prot_file <- unlist(prot_files[[input$dataid]])
   load_interaction_data(prot_file, full_load=F)
   choices(get_sorted_interaction_names())
@@ -24,22 +25,23 @@ confirm_click <- function(input){
 }
 
 create_settings <- function(){
+  settings <- sys.frame()
   return(
     tabsetPanel(type = "tabs", id="settings_tabs", 
                 tabPanel("Settings",
                          div(style = "max-height: 600px; margin-top: 2%;",
                              fluidPage(
                                column(6, 
-                                      colourpicker::colourInput("col_met", "Metabolites", col_met()),
-                                      colourpicker::colourInput("col_pro", "Proteins", col_pro()),
-                                      colourpicker::colourInput("col_enz", "Enzymes", col_enz()),
-                                      colourpicker::colourInput("col_tra", "Transporters", col_tra()),
+                                      colourpicker::colourInput("col_met", "Metabolites", settings$col_met()),
+                                      colourpicker::colourInput("col_pro", "Proteins", settings$col_pro()),
+                                      colourpicker::colourInput("col_enz", "Enzymes", settings$col_enz()),
+                                      colourpicker::colourInput("col_tra", "Transporters", settings$col_tra()),
                                ),
                                column(6,
-                                      colourpicker::colourInput("col_edge", "Interactions", col_edge()),
-                                      colourpicker::colourInput("col_cofactor", "Cofactor interactions", col_cofactor()),
-                                      colourpicker::colourInput("col_go", "Gene Ontology", col_go()),
-                                      sliderInput("size", label = "Size of Metabolites & Proteins:", min = 1, max = 30, value = size())
+                                      colourpicker::colourInput("col_edge", "Interactions", settings$col_edge()),
+                                      colourpicker::colourInput("col_cofactor", "Cofactor interactions", settings$col_cofactor()),
+                                      colourpicker::colourInput("col_go", "Gene Ontology", settings$col_go()),
+                                      sliderInput("size", label = "Size of Metabolites & Proteins:", min = 1, max = 30, value = settings$size())
                                )
                              )
                          )
@@ -48,15 +50,18 @@ create_settings <- function(){
                          div(style = "max-height: 600px; margin-top: 2%;",
                              fluidPage(
                                column(6,
-                                      selectizeInput("search_mode", label = "Search mode", selected = search_mode(), choices = c("Interacts", "Between", "Shortest Path")),
-                                      selectizeInput("graph_filter", multiple = T, label = "Highlight", selected = graph_filter(), choices = c("superclass", "class")), #"cellular"
-                                      numericInput(inputId = "pp_confidence", "Protein-protein confidence (1-1000) ", value = pp_confidence(), min = 1, max = 1000),
+                                      selectizeInput("search_mode", label = "Search mode", selected = settings$search_mode(), 
+                                                     choices = c("Interacts", "Between")),
+                                      selectizeInput("graph_filter", multiple = T, label = "Highlight", selected = settings$graph_filter(), 
+                                                     choices = c("superclass", "class")), #"cellular"
+                                      numericInput(inputId = "pp_confidence", "Protein-protein confidence (1-1000) ", 
+                                                   value = settings$pp_confidence(), min = 1, max = 1000),
                                       ),
                                column(6,
-                                      numericInput(inputId = "neighbour_edges", "Maximum number of edges", neighbour_edges()),
-                                      numericInput(inputId = "neighbours", "Neighborhood depth", value = neighbours(), min = 0),
-                                      selectizeInput(inputId = "omitting_lipids", "Omit lipids", selected = omitting_lipids(), choices = c(TRUE, FALSE)),
-                                      numericInput(inputId = "usage_order", "Inheritance order", value = usage_order(), min = 1, max = 3)
+                                      numericInput(inputId = "neighbour_edges", "Maximum number of edges", settings$neighbour_edges()),
+                                      numericInput(inputId = "neighbours", "Neighborhood depth", value = settings$neighbours(), min = 0),
+                                      selectizeInput(inputId = "omitting_lipids", "Omit lipids", selected = settings$omitting_lipids(), choices = c(TRUE, FALSE)),
+                                      numericInput(inputId = "usage_order", "Inheritance order", value =settings$usage_order(), min = 1, max = 3)
                                       )
                                
                              )
@@ -75,31 +80,59 @@ create_settings <- function(){
 #'@importFrom shinyjs runjs show
 #'@importFrom colourpicker colourInput
 #'@importFrom utils read.csv
+#'@importFrom plotly renderPlotly
+#'@importFrom DT renderDataTable
 #'@noRd
 server <- function(input, output, session) {
-    waiter::waiter_show(html = div(h2("Loading the Immuno-Atlas"), waiter::spin_flower()))
-    env <- parent.frame()
-    input <<- input
-    session <<- session
-    output <<- output
-    sel <<- ""
-    to_disable <<- c("filter", "filterGraph", "mode", "modeGraph", "confirmData",
+    waiter::waiter_show(html = div(h2("Loading the Atlas"), waiter::spin_flower()))
+    output$readme <- renderUI(includeHTML("README.html"))
+
+    env <- sys.frame()
+    env$input <- input
+    env$session <- session
+    env$output <- output
+    env$sel <- ""
+    
+    to_disable <- c("filter", "filterGraph", "mode", "modeGraph", "confirmData",
                      "action", "actionGraph", "settings_button", "settings_buttonGraph")
-    prot_files <<- list("Direct" = "Protein-protein.csv", 
+    env$prot_files <- list("Direct" = "Protein-protein.csv", 
                         "First Indirect" = "Protein-protein_1.csv", 
                         "Second Indirect" = "Protein-protein_2.csv")
     env$graph <- NULL
-    is_reactive <<- TRUE
-    modes <<- reactiveVal()
-    choices <<- reactiveVal()
-    to_select_names <<- get_sorted_interaction_names()
+    env$is_reactive <- TRUE
+    env$modes <- reactiveVal()
+    env$choices <- reactiveVal()
+    env$to_select_names <- get_sorted_interaction_names()
     
-    choices(to_select_names)
-    observeEvent(choices, updateSelectizeInput(session = session, "filter", 
-                           selected = NULL, server = T, choices = choices()), once = T)
+    env$choices(env$to_select_names)
+    observeEvent(env$choices, updateSelectizeInput(session = session, "filter", 
+                           selected = NULL, server = T, choices = env$choices()), once = T)
     
-    observeEvent(c(input$actionGraph, input$action), env$graph <<- build_button(sel), ignoreInit = T)
-    observe_inputs()
+    observeEvent(c(input$actionGraph, input$action), {
+      shiny::validate(need(env$sel, ""))
+      updateTabItems(session, "tabs", "network")
+      sapply(to_disable, shinyjs::disable)
+      
+      graph <- get_graph(env$sel, neighbours = env$neighbours(), 
+                         omit_lipids = env$omitting_lipids(), 
+                         max_neighbours = env$neighbour_edges(), verbose = F,
+                         type = input$mode, search_mode = env$search_mode())
+      if (is.igraph(graph)){
+        output$graph <- renderPlotly(to_plotly(graph))
+        output$heatmapplot <- renderPlotly(get_heatmap_plot(graph))
+        output$barplot_centrality <- renderPlotly(get_barplot(graph))
+        output$barplot_gos <- renderPlotly(get_go_barplot(graph))
+        #output$scatter_plot <- renderPlotly(get_2d_scatter(graph))
+        output$datatable_nodes <- renderDataTable(get_node_table(graph))
+        output$datatable_edges <- renderDataTable(get_edge_table(graph))
+        output$datatable_processes <- renderDataTable(get_process_table(graph))
+      }
+      sapply(to_disable, shinyjs::enable) 
+      env$graph <<- graph
+      
+    }, ignoreInit = T)
+    
+    observe_inputs(session, input)
     default_settings()
   
     ### ---------------------
@@ -114,28 +147,33 @@ server <- function(input, output, session) {
       shinyalert::shinyalert(title = "Settings", showCancelButton = T, cancelButtonText = "Reset", 
                    closeOnClickOutside = F, html = T, size = "l", create_settings(), 
                    callbackR = function(x) if (!x) default_settings())
+      showNotification("Applied Settings")
+      
     })
     observeEvent(input$click_id, { # show modal in graph
+        loginfo(sprintf("Clicked on node: %s", input$click_id))
         node <- V(env$graph)[get_vertice_id(env$graph, input$click_id)]
+        loginfo(sprintf("Name: %s", node$name))
         edges <- incident(env$graph, node)
+        css <- "overflow-y:scroll; max-height: 600px; margin-top: 2%; background-color:white;"
         modal <- tabsetPanel(type = "pills",
-                                 tabPanel("Proteins/Metabolites", div(style = "overflow-y:scroll; max-height: 600px; margin-top: 2%; background-color:white;", get_node_table(env$graph, node))),
-                                 tabPanel("Interactions", div(style = "overflow-y:scroll; max-height: 600px; margin-top: 2%; background-color:white;", get_edge_table(env$graph, edges))),
-                                 tabPanel("Processes", div(style = "overflow-y:scroll; max-height: 600px; margin-top: 2%; background-color:white;", get_process_table(env$graph, node)))
+                             tabPanel("Proteins/Metabolites", div(style = css, get_node_table(env$graph, node))),
+                             tabPanel("Interactions", div(style = css, get_edge_table(env$graph, edges))),
+                             tabPanel("Processes", div(style = css, get_process_table(env$graph, node)))
         )
         shinyalert::shinyalert(title = "Info", closeOnClickOutside = T, html = T, modal, size = "l")
         runjs('Shiny.setInputValue("click_id", null, {priority: "event"});')
     })
     observe({
-        if (search_mode() == "Shortest Path" && length(input$filter) < 2){
+        if (env$search_mode() == "Shortest Path" && length(input$filter) < 2){
             sapply(c("action", "actionGraph"), shinyjs::disable)
         }
     })
 
     observeEvent(input$filter, ignoreNULL = F, {
-        if (length(input$filter) > 1 && search_mode() == "Shortest Path"){
+        if (length(input$filter) > 1 && env$search_mode() == "Shortest Path"){
             sapply(c("action", "actionGraph"), shinyjs::enable)
-        } else if (length(input$filter) > 0 && search_mode() != "Shortest Path" ){
+        } else if (length(input$filter) > 0 && env$search_mode() != "Shortest Path" ){
             sapply(c("action", "actionGraph"), shinyjs::enable)
         } else {
             sapply(c("action", "actionGraph"), shinyjs::disable)
@@ -144,18 +182,19 @@ server <- function(input, output, session) {
   
     observeEvent(c(input$col_met, input$col_pro, input$col_enz, input$col_tra, input$size), {
         req(!is.null(env$graph))
-        env$graph <<- add_vertice_colors(env$graph)
+        env$graph <<- add_vertice_colors(env$graph, env$is_reactive, env$col_met, env$col_pro)
         output$graph <- renderPlotly(to_plotly(env$graph))
+        showNotification("Applied Settings")
     })
   
     observeEvent(input$confirm, {
         ids <- as.vector(read.csv(input$file1$datapath, header = T)[,1])
         names <- get_metabolite_names(ids[!is.na(ids)])
-        updateSelectizeInput(session, "filter", selected = unique(c(input$filter, names)), server = T,  choices = choices())
+        updateSelectizeInput(session, "filter", selected = unique(c(input$filter, names)), server = T,  choices = env$choices())
         showNotification(paste("Found", length(names), "metabolites"))
         shinyjs::runjs('$("ul.menu-open").slideUp(); $(".active")[0].classList.remove("active");')
     })
-    observeEvent(input$confirmData, confirm_click(input), ignoreInit = T)
+    observeEvent(input$confirmData, confirm_click(input, env$prot_files, env$choices), ignoreInit = T)
   
     shinyjs::show("main_menu")
     shinyjs::show("main_page")
