@@ -18,6 +18,8 @@ add_layout(
 Calculate layout for nodes in graph
 }
 \examples{
+\dontrun{
 graph <- example_graph()
 graph <- add_layout(graph)
+}
 }

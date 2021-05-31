@@ -6,11 +6,16 @@
 \usage{
 metabolic_process_summary(
    graph,
-   threshold = 1
+   p = 1,
+   centrality = 0
 )
 }
 \arguments{
 \item{graph}{igraph object}
+
+\item{p}{placeholder}
+
+\item{centrality}{placeholder}
 }
 \description{
 Return a long-format DataFrame with GO-Pvalue combinations per metabolite

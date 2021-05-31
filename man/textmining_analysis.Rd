@@ -4,7 +4,15 @@
 \alias{textmining_analysis}
 \title{Perform text mining analysis}
 \usage{
-textmining_analysis(config_path = "config.yaml", font = 18)
+textmining_analysis(
+   config_path = "config.yaml",
+   font = 18
+)
+}
+\arguments{
+\item{config_path}{placeholder}
+
+\item{font}{placeholder}
 }
 \description{
 Perform text mining analysis

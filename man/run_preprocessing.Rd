@@ -8,6 +8,9 @@ run_preprocessing(
    config_path = "config.yaml"
 )
 }
+\arguments{
+\item{config_path}{placeholder}
+}
 \description{
 Run Preprocessing
 }

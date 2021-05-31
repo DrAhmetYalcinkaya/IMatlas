@@ -8,9 +8,11 @@ get_graph(
    filter,
    neighbours = 0,
    max_neighbours = Inf,
-   type = "Gene Ontology",
    simple = F,
-   search_mode = "Interacts"
+   omit_lipids = F,
+   type = "Immune process by name",
+   search_mode = "Interacts",
+   verbose = T
 )
 }
 \arguments{
@@ -22,19 +24,24 @@ get_graph(
 
 \item{simple}{Boolean value indicating to return a barebone graph or including metadata.}
 
+\item{omit_lipids}{Boolean value if lipids should be omitted}
+
 \item{type}{String containing the type of search.}
 
 \item{search_mode}{String of either 'Interacts' or 'Between'. Interacts finds the first neighbour
 of the given search, while Between only returns interactions between the proteins / metabolites given.}
+
+\item{verbose}{Boolean value, should info be printed?}
 }
 \description{
 Get igraph object
 }
 \examples{
 # Construct a GO graph
+\dontrun{
 g <- get_graph("microglial cell activation")
 g <- get_graph("microglial cell activation", 0, "Gene Ontology")
-
 # Construct a graph using Metabolites and/or Proteins
 g <- get_graph("L-Asparagine", type = "Metabolites/Proteins")
+}
 }

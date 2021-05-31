@@ -6,8 +6,16 @@
 \usage{
 add_node_pvalues(
    graph,
+   protein_go_df,
    order = 1
 )
+}
+\arguments{
+\item{graph}{placeholder}
+
+\item{protein_go_df}{placeholder}
+
+\item{order}{placeholder}
 }
 \description{
 calculate all node-based pvalues

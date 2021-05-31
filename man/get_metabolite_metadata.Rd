@@ -19,6 +19,8 @@ Get metadata of metabolites
 }
 \examples{
 # Get GOs associated with metabolites
+\dontrun{
 g <- get_graph("microglial cell activation")
 get_metabolite_metadata(g, "go")
+}
 }

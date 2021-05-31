@@ -4,12 +4,12 @@
 \alias{to_plotly}
 \title{Convert igraph object to an interactive Plotly}
 \usage{
-igraph_to_plotly2(
-   g
+to_plotly(
+   graph
 )
 }
 \arguments{
-\item{g}{iGraph object obtained from get_graph()}
+\item{graph}{iGraph object obtained from get_graph()}
 }
 \description{
 Convert igraph object to an interactive Plotly

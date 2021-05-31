@@ -15,6 +15,8 @@ example_graph(
 Produce the example graph
 }
 \examples{
+\dontrun{
 graph <- example_graph()
 plot(graph)
+}
 }

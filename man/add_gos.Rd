@@ -6,11 +6,14 @@
 \usage{
 add_gos(
    graph,
+   protein_go_df,
    verbose = T
 )
 }
 \arguments{
 \item{graph}{igraph object representing your graph}
+
+\item{protein_go_df}{placeholder}
 
 \item{verbose}{Present a warning when no proteins are found?}
 }
@@ -18,6 +21,8 @@ add_gos(
 Assign Gene Ontologies to vertices
 }
 \examples{
+\dontrun{
 graph <- example_graph()
 graph <- add_gos(graph)
+}
 }

@@ -15,6 +15,8 @@ remove_unconnected(
 Remove unconnected nodes
 }
 \examples{
+\dontrun{
 graph <- example_graph()
 graph <- remove_unconnected(graph)
+}
 }

@@ -6,13 +6,22 @@
 \usage{
 load_data(
    config,
-   neighbours = 0
+   neighbours = 0,
+   confidence = 0,
+   full = TRUE,
+   verbose = TRUE
 )
 }
 \arguments{
 \item{config}{String path to a YAML configuration file}
 
 \item{neighbours}{Integer value representing the number of 'steps' allowed for protein-protein interactions}
+
+\item{confidence}{placeholder}
+
+\item{full}{placeholder}
+
+\item{verbose}{placeholder}
 }
 \description{
 Variables and files are loaded to the global environment to

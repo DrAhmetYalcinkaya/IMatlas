@@ -9,7 +9,7 @@ metabolite_go_graph(
 )
 }
 \arguments{
-\item{g}{iGraph object obtained from get_graph()}
+\item{graph}{iGraph object obtained from get_graph()}
 }
 \description{
 Construct a network of metabolites and GOs
