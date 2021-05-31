@@ -15,8 +15,9 @@
 run_shiny <- function(browser = TRUE, port = 2222){
   env <- sys.frame()
   if (is.null(env$interactions)) stop("No data loaded. Run 'load_data(config_path)' first.", call. = F)
-  app <- shinyApp(ui, server)
-  runApp(app, launch.browser = browser, port = port)
+  if (browser){
+    runApp(shinyApp(ui, server), launch.browser = browser, port = port)
+  } else {
+    shinyApp(ui, server)
+  }
 }
-
-
