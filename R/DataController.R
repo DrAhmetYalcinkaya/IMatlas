@@ -153,7 +153,6 @@ get_node_table <- function(graph, nodes = V(graph)){
 #'@importFrom stats setNames
 #'@noRd
 get_process_table <- function(graph, nodes = V(graph)){
-  logdebug("Building process table")
   id <- go <- NULL
   if (is.igraph(graph) && length(nodes) > 0){
     df <- graph %>%
@@ -167,13 +166,12 @@ get_process_table <- function(graph, nodes = V(graph)){
                                                    function(x) data.frame(pvalue = x, `Process ID` = names(x)))))
       df <- df[,-2]
       colnames(df) <- c("Process.ID", "Pvalue", "Metabolite.ID")
-      logdebug(paste(head(df$Process.ID), collapse = ", "))
-      df$Metabolite <- get_metabolite_names(df$Metabolite.ID)
-      df$Process <- get_go_names(df$Process.ID)
+      df$Metabolite <- get_metabolite_names(as.vector(df$Metabolite.ID))
+      df$Process <- get_go_names(as.vector(df$Process.ID))
       df <- df[,c("Metabolite", "Metabolite.ID", "Process", "Process.ID", "Pvalue")]
       df <- df[order(df$Pvalue),]
     } else {
-      df <- data.frame(Metabolite = get_metabolite_names(df$id), 
+      df <- data.frame(Metabolite = get_metabolite_names(as.vector(df$id)), 
                        Metabolite.Id = df$id, 
                        Process = "", Pvalue = "")
     }
@@ -212,7 +210,7 @@ get_go_barplot <- function(graph){
     df <- df[df$pvalues <= 0.05,]
     logdebug(sprintf("Number of significant GOs found: %d", nrow(df)))
     if (nrow(df) > 0){
-        df$go <- get_go_names(df$go)
+        df$go <- get_go_names(as.vector(df$go))
         return(plotly::ggplotly(ggplot2::ggplot(df, aes(x = reorder(.data$go, .data$pvalues), y = .data$pvalues)) + 
                             geom_bar(stat = "identity") + theme_minimal() + 
                             theme(axis.text.x = element_text(angle = 45)))
