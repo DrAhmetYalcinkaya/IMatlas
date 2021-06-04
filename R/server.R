@@ -18,9 +18,10 @@ default_settings <- function(){
 }
 
 confirm_click <- function(input, prot_files, choices){
-  prot_file <- unlist(prot_files[[input$dataid]])
+  env <- sys.frame()
+  prot_file <- unlist(env$prot_files[[input$dataid]])
   load_interaction_data(prot_file, full_load=F)
-  choices(get_sorted_interaction_names())
+  env$choices(get_sorted_interaction_names())
   shinyjs::runjs('$("ul.menu-open").slideUp(); $(".active")[0].classList.remove("active");')
 }
 
@@ -164,16 +165,9 @@ server <- function(input, output, session) {
         shinyalert::shinyalert(title = "Info", closeOnClickOutside = T, html = T, modal, size = "l")
         runjs('Shiny.setInputValue("click_id", null, {priority: "event"});')
     })
-    observe({
-        if (env$search_mode() == "Shortest Path" && length(input$filter) < 2){
-            sapply(c("action", "actionGraph"), shinyjs::disable)
-        }
-    })
 
     observeEvent(input$filter, ignoreNULL = F, {
-        if (length(input$filter) > 1 && env$search_mode() == "Shortest Path"){
-            sapply(c("action", "actionGraph"), shinyjs::enable)
-        } else if (length(input$filter) > 0 && env$search_mode() != "Shortest Path" ){
+        if (length(input$filter) > 0){
             sapply(c("action", "actionGraph"), shinyjs::enable)
         } else {
             sapply(c("action", "actionGraph"), shinyjs::disable)
@@ -188,11 +182,14 @@ server <- function(input, output, session) {
     })
   
     observeEvent(input$confirm, {
-        ids <- as.vector(read.csv(input$file1$datapath, header = T)[,1])
-        names <- get_metabolite_names(ids[!is.na(ids)])
-        updateSelectizeInput(session, "filter", selected = unique(c(input$filter, names)), server = T,  choices = env$choices())
-        showNotification(paste("Found", length(names), "metabolites"))
+        ids <- as.vector(read.csv(input$file1$datapath, header = F)[,1])
+        env$sel <- unique(c(env$sel, ids))
+        logdebug(sprintf("IDs found with bulk import %s", paste(head(env$sel), collapse = ", ")))
+        
+        showNotification(paste("Found", sum(env$choices() %in% env$sel), "metabolites"))
         shinyjs::runjs('$("ul.menu-open").slideUp(); $(".active")[0].classList.remove("active");')
+        updateSelectizeInput(session, "filter", selected = env$sel, 
+                             server = T,  choices = env$choices())
     })
     observeEvent(input$confirmData, confirm_click(input, env$prot_files, env$choices), ignoreInit = T)
   

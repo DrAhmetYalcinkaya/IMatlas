@@ -11,12 +11,16 @@ observe_inputs <- function(session, input){
   env <- sys.frame()
     li_filter <- list("home" = "filter", "data" = "filterData", "network" = "filterGraph")
     li_mode <- list("home" = "mode", "data" = "modeData", "network" = "modeGraph")
-  
     lapply(names(li_filter), function(l){
         id = li_filter[[l]]
         observeEvent(input[[id]], if (req(input$tabs) == l) env$sel <- input[[id]])
-        observe(if (req(input$tabs) == l) updateSelectizeInput(session, id, selected = env$sel,  
-                                                               server = T, choices = env$choices()))
+        observe({
+          if (req(input$tabs) == l){
+          logdebug("Update selectize input with selected: %s ", paste(env$sel, collapse = ", "))
+          updateSelectizeInput(session, id, selected = env$sel,  
+                               server = T, choices = env$choices())
+          }
+        })
     })
   
     lapply(names(li_mode), function(l){
