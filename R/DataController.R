@@ -153,6 +153,7 @@ get_node_table <- function(graph, nodes = V(graph)){
 #'@importFrom stats setNames
 #'@noRd
 get_process_table <- function(graph, nodes = V(graph)){
+  logdebug("Building process table")
   id <- go <- NULL
   if (is.igraph(graph) && length(nodes) > 0){
     df <- graph %>%
@@ -166,6 +167,7 @@ get_process_table <- function(graph, nodes = V(graph)){
                                                    function(x) data.frame(pvalue = x, `Process ID` = names(x)))))
       df <- df[,-2]
       colnames(df) <- c("Process.ID", "Pvalue", "Metabolite.ID")
+      logdebug(paste(head(df$Process.ID), collapse = ", "))
       df$Metabolite <- get_metabolite_names(df$Metabolite.ID)
       df$Process <- get_go_names(df$Process.ID)
       df <- df[,c("Metabolite", "Metabolite.ID", "Process", "Process.ID", "Pvalue")]
