@@ -110,6 +110,7 @@ server <- function(input, output, session) {
                            selected = NULL, server = T, choices = env$choices()), once = T)
     
     observeEvent(c(input$actionGraph, input$action), {
+      shinyjs::removeCssClass(selector = "a[data-value='network']", class = "inactiveLink")
       shiny::validate(need(env$sel, ""))
       updateTabItems(session, "tabs", "network")
       sapply(to_disable, shinyjs::disable)
@@ -195,6 +196,8 @@ server <- function(input, output, session) {
   
     shinyjs::show("main_menu")
     shinyjs::show("main_page")
+    shinyjs::addCssClass(selector = "a[data-value='network']", class = "inactiveLink")
+    
     waiter_hide()
 }
 

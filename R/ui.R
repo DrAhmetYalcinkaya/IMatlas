@@ -62,7 +62,12 @@ side_bar_menu <- function(){
 ui <- function(){
   dashboardPage(title = "Immuno-Metabolome Atlas",
                 dashboardHeader(title="", titleWidth = 300, disable = T),
-                dashboardSidebar(width = 300, useShinyjs(), use_waiter(), useShinyalert(), shinyjs::hidden(div(id = "main_menu", side_bar_menu()))),
+                dashboardSidebar(width = 300, useShinyjs(), use_waiter(), 
+                                 tags$head(tags$style(".inactiveLink {
+                            pointer-events: none;
+                           cursor: default;
+                           }")),
+                                 useShinyalert(), shinyjs::hidden(div(id = "main_menu", side_bar_menu()))),
                 dashboardBody(
                   shinyjs::hidden(
                     div(id = "main_page",
