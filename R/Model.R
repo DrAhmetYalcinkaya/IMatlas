@@ -69,6 +69,7 @@ read_file <- function(source, index_column){
 #'@param protein_ids Vector of protein IDs 
 #'@noRd
 get_protein_names <- function(ids){
+  ids <- as.vector(ids)
   Name <- NULL
   data <- sys.frame()
   data$prot_names[ids, on="ID", Name]
@@ -82,6 +83,7 @@ get_protein_names <- function(ids){
 #'@param names Vector of protein names
 #'@noRd
 get_protein_ids <- function(names){
+  names <- as.vector(names)
   ID <- NULL
   data <- sys.frame()
   data$prot_names[names, on="Name", ID]
@@ -95,6 +97,7 @@ get_protein_ids <- function(names){
 #'@param ids Vector of metabolite IDs
 #'@noRd
 get_metabolite_names <- function(ids){
+  ids <- as.vector(ids)
   Name <- NULL
   data <- sys.frame()
   data$meta_names[ids, on="ID", Name]
@@ -108,6 +111,7 @@ get_metabolite_names <- function(ids){
 #'@param names Vector of metabolite names
 #'@noRd
 get_metabolite_ids <- function(names){
+  names <- as.vector(names)
   ID <- NULL
   data <- sys.frame()
   data$meta_names[names, on="Name", ID]
@@ -121,6 +125,7 @@ get_metabolite_ids <- function(names){
 #'@param go_ids Vector of Gene Ontology IDs
 #'@noRd
 get_go_names <- function(go_ids){
+  go_ids <- as.vector(go_ids)
   Name <- NULL
   data <- sys.frame()
   if (is.null(go_ids)){
@@ -137,6 +142,7 @@ get_go_names <- function(go_ids){
 #'@param ids Vector of Gene Ontology IDs
 #'@noRd
 get_proteins_by_goid <- function(ids){
+  ids <- as.vector(ids)
   ID <- NULL
   data <- sys.frame()
   data$protein_go_df[ids, on="GOID", unique(ID)]
@@ -151,6 +157,7 @@ get_proteins_by_goid <- function(ids){
 #'@importFrom dplyr inner_join
 #'@noRd
 get_proteins_by_go <- function(names){
+  names <- as.vector(names)
   GOID <- NULL
   data <- sys.frame()
   get_proteins_by_goid(data$go_name_df[names, on="Name", GOID])
@@ -169,6 +176,7 @@ get_proteins_by_go <- function(names){
 #'@importFrom data.table %chin%
 #'@noRd
 get_interactions <- function(df, ids, mode){
+  ids <- as.vector(ids)
   From <- To <- NULL
   if (mode == "both") return(df[(From %chin% ids & To %chin% ids)])
   df[(From %chin% ids | To %chin% ids)]
@@ -184,6 +192,7 @@ get_interactions <- function(df, ids, mode){
 #'@param mode String determining the mode, see examples
 #'@noRd
 get_mm_interactions <- function(ids, mode = "both"){
+  ids <- as.vector(ids)
   data <- sys.frame()
   get_interactions(data$mm_interactions, ids, mode)
   
@@ -199,6 +208,7 @@ get_mm_interactions <- function(ids, mode = "both"){
 #'@param mode String determining the mode, see examples
 #'@noRd
 get_pp_interactions <- function(ids, mode = "both"){
+  ids <- as.vector(ids)
   data <- sys.frame()
   get_interactions(data$pp_interactions, ids, mode)
 } 
@@ -213,6 +223,7 @@ get_pp_interactions <- function(ids, mode = "both"){
 #'@param mode String determining the mode, see examples
 #'@noRd
 get_pp_interaction_ids <- function(ids, mode = "both"){
+  ids < as.vector(ids)
   c(t(get_pp_interactions(ids, mode)[, c("From", "To")]))
 }
 
@@ -227,6 +238,7 @@ get_pp_interaction_ids <- function(ids, mode = "both"){
 #'@noRd
 get_pm_interaction_ids <- function(ids, mode = "both"){
   data <- sys.frame()
+  ids < as.vector(ids)
   c(t(get_interactions(data$pm_interactions, ids, mode)[, c("From", "To")]))
 }
 
@@ -241,6 +253,7 @@ get_pm_interaction_ids <- function(ids, mode = "both"){
 #'@noRd
 get_all_interactions <- function(ids, interactions, mode = "both"){
   Confidence <- NULL
+  ids < as.vector(ids)
   settings <- sys.frame()
   df <- get_interactions(interactions, ids, mode)[Confidence >= isolate(settings$pp_confidence())]
   lonely_ids <- ids[which(!ids %in% c(t(df)))]
@@ -259,6 +272,7 @@ get_all_interactions <- function(ids, interactions, mode = "both"){
 #'@noRd
 get_gos_per_protein <- function(id){
   GOID <- Name <- NULL
+  id < as.vector(id)
   data <- sys.frame()
   data$go_name_df[data$protein_go_df[id, GOID], unique(Name)]
 } 
@@ -269,7 +283,10 @@ get_gos_per_protein <- function(id){
 #'    ids
 #')
 #'@noRd
-get_all_protein_gos <- function(ids) lapply(ids, get_gos_per_protein)
+get_all_protein_gos <- function(ids){
+  ids <- as.vector(ids)
+  lapply(ids, get_gos_per_protein)
+} 
 
 #'@title Get metabolite cofactors for given protein identifiers
 #'@usage get_cofactors(
@@ -278,6 +295,7 @@ get_all_protein_gos <- function(ids) lapply(ids, get_gos_per_protein)
 #'@param ids Vector of protein identifiers
 #'@noRd
 get_cofactors <- function(ids){
+  ids <- as.vector(ids)
   Cofactor <- NULL
   data <- sys.frame()
   data$cofactor_df[ids, Cofactor]
@@ -291,6 +309,7 @@ get_cofactors <- function(ids){
 #'@param ids Vector of protein identifiers
 #'@noRd
 get_enzymes <- function(ids){
+  ids <- as.vector(ids)
   Number <- NULL
   data <- sys.frame()
   lapply(ids, function(x) data$enzyme_df[x, Number])
@@ -303,6 +322,7 @@ get_enzymes <- function(ids){
 #'@param ids Vector of metabolite identifiers
 #'@noRd
 get_class <- function(ids){
+  ids <- as.vector(ids)
   class <- NULL
   data <- sys.frame()
   data$met_class[ids, class]
@@ -316,6 +336,7 @@ get_class <- function(ids){
 #'@param ids Vector of metabolite identifiers
 #'@noRd
 get_superclass <- function(ids){
+  ids <- as.vector(ids)
   super_class <- NULL
   data <- sys.frame()
   data$met_superclass[ids, super_class]
@@ -328,6 +349,7 @@ get_superclass <- function(ids){
 #')
 #'@noRd
 get_all_pathways <- function(ids, met_path){
+  ids <- as.vector(ids)
   pathway <- NULL
   sapply(ids, simplify = F, USE.NAMES = T, function(x) met_path[x, pathway])
 }
@@ -339,6 +361,7 @@ get_all_pathways <- function(ids, met_path){
 #'@param ids Vector of protein identifiers
 #'@noRd
 get_transporter <- function(ids, prot_trans){
+  ids <- as.vector(ids)
   transporter <- NULL
   prot_trans[ids, transporter]
 } 
@@ -350,6 +373,7 @@ get_transporter <- function(ids, prot_trans){
 #'@param filter Vector of pathway names
 #'@noRd
 get_ids_from_pathways <- function(pathways){
+  pathways <- as.vector(pathways)
   ID <- NULL
   data <- sys.frame()
   data$met_path[pathways, on="pathway", ID]
@@ -363,6 +387,7 @@ get_ids_from_pathways <- function(pathways){
 #'@param filter Vector of metabolite superclass names
 #'@noRd
 get_ids_from_superclass <- function(superclass){
+  superclass <- as.vector(superclass)
   ID <- NULL
   data <- sys.frame()
   data$met_superclass[superclass, on="super_class", ID]
@@ -375,6 +400,7 @@ get_ids_from_superclass <- function(superclass){
 #'@param filter Vector of metabolite class names
 #'@noRd
 get_ids_from_class <- function(class){
+  class <- as.vector(class)
   ID <- NULL
   data <- sys.frame()
   data$met_class[class, on="class", ID]
@@ -388,6 +414,7 @@ get_ids_from_class <- function(class){
 #'@importFrom dplyr coalesce
 #'@noRd
 convert_ids_to_names <- function(ids){
+  ids <- as.vector(ids)
   Name <- NULL
   data <- sys.frame()
   data$id_names[ids, on = "ID", Name, allow.cartesian=T]
@@ -402,6 +429,7 @@ convert_ids_to_names <- function(ids){
 #'@importFrom dplyr coalesce
 #'@noRd
 convert_names_to_ids <- function(names){
+  names <- as.vector(names)
   ID <- NULL
   data <- sys.frame()
   data$id_names[names, on="Name", ID, allow.cartesian=T]
@@ -414,6 +442,7 @@ convert_names_to_ids <- function(names){
 #')
 #'@noRd
 network_from_gos <- function(gos, neighbours=0){
+  gos <- as.vector(gos)
   if (!is.null(gos)){
     data <- sys.frame()
     proteins <- get_proteins_by_go(gos)
@@ -472,6 +501,7 @@ get_sorted_interaction_names <- function(){
 #'@param gos Vector of Gene Ontology names
 #'@noRd
 get_go_ids <- function(gos){
+  gos <- as.vector(gos)
   if (!is.null(gos)){
     GOID <- NULL
     data <- sys.frame()
@@ -490,6 +520,7 @@ get_go_ids <- function(gos){
 #'@param max Upper boundary after normalization
 #'@noRd
 normalized <- function(vec, min=0, max=1){
+  vec <- as.vector(vec)
   dist <- (max - min) * ((vec - min(vec)) / max(vec) - min(vec)) + min
   dist[is.nan(dist)] <- min
   dist
