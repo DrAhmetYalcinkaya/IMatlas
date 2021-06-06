@@ -211,7 +211,6 @@ get_go_barplot <- function(graph){
     df <- unique(data.frame(go = names(d), pvalues = d))
     logdebug(sprintf("Number of GOs found: %d", length(unique(df$go))))
              
-    df <- df[df$pvalues <= 0.05,]
     logdebug(sprintf("Number of significant GOs found: %d", nrow(df)))
     if (nrow(df) > 0){
         df$go <- get_go_names(as.vector(df$go))
