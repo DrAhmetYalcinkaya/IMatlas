@@ -13,9 +13,9 @@ add_gos(
 \arguments{
 \item{graph}{igraph object representing your graph}
 
-\item{protein_go_df}{placeholder}
-
 \item{verbose}{Present a warning when no proteins are found?}
+
+\item{protein_go_df}{placeholder}
 }
 \description{
 Assign Gene Ontologies to vertices

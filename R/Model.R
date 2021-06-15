@@ -9,6 +9,7 @@
 #'options <- list(GO_ID = "GO:0002376")
 #'go_vec <- get_gos(options)
 #'}
+#'}
 #'@importFrom httr GET content
 #'@noRd
 get_gos <- function(options){
@@ -67,7 +68,7 @@ read_file <- function(source, index_column){
 #'    protein_ids
 #')
 #'@param protein_ids Vector of protein IDs 
-#'@noRd
+#'@export
 get_protein_names <- function(ids){
   ids <- as.vector(ids)
   Name <- NULL
@@ -81,7 +82,7 @@ get_protein_names <- function(ids){
 #'    names
 #')
 #'@param names Vector of protein names
-#'@noRd
+#'@export
 get_protein_ids <- function(names){
   names <- as.vector(names)
   ID <- NULL
@@ -95,7 +96,7 @@ get_protein_ids <- function(names){
 #'    ids
 #')
 #'@param ids Vector of metabolite IDs
-#'@noRd
+#'@export
 get_metabolite_names <- function(ids){
   ids <- as.vector(ids)
   Name <- NULL
@@ -109,7 +110,7 @@ get_metabolite_names <- function(ids){
 #'    names
 #')
 #'@param names Vector of metabolite names
-#'@noRd
+#'@export
 get_metabolite_ids <- function(names){
   names <- as.vector(names)
   ID <- NULL
@@ -123,7 +124,7 @@ get_metabolite_ids <- function(names){
 #'    go_ids
 #')
 #'@param go_ids Vector of Gene Ontology IDs
-#'@noRd
+#'@export
 get_go_names <- function(go_ids){
   go_ids <- as.vector(go_ids)
   Name <- NULL
@@ -140,7 +141,7 @@ get_go_names <- function(go_ids){
 #'    ids
 #')
 #'@param ids Vector of Gene Ontology IDs
-#'@noRd
+#'@export
 get_proteins_by_goid <- function(ids){
   ids <- as.vector(ids)
   ID <- NULL
@@ -155,7 +156,7 @@ get_proteins_by_goid <- function(ids){
 #')
 #'@param names Vector of Gene Ontology names
 #'@importFrom dplyr inner_join
-#'@noRd
+#'@export
 get_proteins_by_go <- function(names){
   names <- as.vector(names)
   GOID <- NULL
@@ -499,7 +500,7 @@ get_sorted_interaction_names <- function(){
 #'    gos
 #')
 #'@param gos Vector of Gene Ontology names
-#'@noRd
+#'@export
 get_go_ids <- function(gos){
   gos <- as.vector(gos)
   if (!is.null(gos)){

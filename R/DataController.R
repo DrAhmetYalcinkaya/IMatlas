@@ -314,6 +314,7 @@ data_filter <- function(filter, neighbours=0,
     return(df[complete.cases(df),])
 }
 
+
 #'@title Retrieve data given a search
 #'@usage lipid_filter(
 #'    df,
@@ -323,9 +324,10 @@ data_filter <- function(filter, neighbours=0,
 #'@param omit_lipids Boolean value if lipid metabolites should be omitted
 #'@noRd
 lipid_filter <- function(df, omit_lipids, met_superclass){
-  super_class <- NULL
+  super_class <- ID <- NULL
   if (omit_lipids){
-    lipids <- met_superclass[super_class == "Lipids and lipid-like molecules", j="ID"]
+    loginfo("Ommiting lipids")
+    lipids <- met_superclass[super_class == "Lipids and lipid-like molecules", ID]
     df <- df[which(df$From %in% lipids + df$To %in% lipids == 0), ]
   }
   return(df)

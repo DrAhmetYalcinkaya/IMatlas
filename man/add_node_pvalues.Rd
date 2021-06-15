@@ -13,9 +13,9 @@ add_node_pvalues(
 \arguments{
 \item{graph}{placeholder}
 
-\item{protein_go_df}{placeholder}
-
 \item{order}{placeholder}
+
+\item{protein_go_df}{placeholder}
 }
 \description{
 calculate all node-based pvalues

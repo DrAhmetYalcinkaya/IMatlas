@@ -13,12 +13,11 @@
 to_graph <- function(graph, type, verbose = FALSE){
   if (is.igraph(graph)){
     settings <- sys.frame()
-    protein_data <- settings$protein_go_df
     graph <- graph %>%
       add_centrality(isolate(settings$size())) %>%
       add_precision() %>%
-      add_gos(protein_data, verbose = verbose) %>%
-      add_node_pvalues(protein_data, order = isolate(settings$usage_order()))
+      add_gos(verbose = verbose) %>%
+      add_node_pvalues(order = isolate(settings$usage_order()))
     
     if (type == "Immune process by name (without proteins)") graph <- metabolite_go_graph()
     graph <- add_metadata(graph) %>%
@@ -126,7 +125,8 @@ add_layout <- function(graph, iterations = 2000){
 #'graph <- add_gos(graph)
 #'}
 #'@export
-add_gos <- function(graph, protein_go_df, verbose = T){
+add_gos <- function(graph, verbose = T){
+  data <- sys.frame()
   if (is.igraph(graph)){
     loginfo("Adding graph GO-terms")
     
@@ -134,8 +134,8 @@ add_gos <- function(graph, protein_go_df, verbose = T){
     if (length(prot_v) == 0){
       logwarn("No proteins found, skipping assigning GOs")
     } else {
-      all_go <- table(protein_go_df$GOID)
-      graph$go <- calculate_pvalues(V(graph), all_go, protein_go_df)
+      all_go <- table(data$protein_go_df$GOID)
+      graph$go <- calculate_pvalues(V(graph), all_go, data$protein_go_df)
     }
   }
   graph
@@ -177,15 +177,16 @@ metabolite_go_graph <- function(graph){
 #'@importFrom pbapply pblapply
 #'@importFrom data.table data.table
 #'@export
-add_node_pvalues <- function(graph, protein_go_df,  order = 1){
+add_node_pvalues <- function(graph,  order = 1){
+  data <- sys.frame()
   if (is.igraph(graph)){
     loginfo("Adding metabolite GO-terms")
     mets <- get_metabolite_vertice_ids(graph)
     sub <- neighborhood(graph, nodes = V(graph)[mets], order = order)
-    all_go <- table(protein_go_df$GOID)
-    V(graph)[mets]$go <- lapply(sub, function(nodes) calculate_pvalues(nodes, all_go, protein_go_df))
+    all_go <- table(data$protein_go_df$GOID)
+    V(graph)[mets]$go <- lapply(sub, function(nodes) calculate_pvalues(nodes, all_go, data$protein_go_df))
     V(graph)[-mets]$go <- lapply(V(graph)[-mets]$id, function(id){
-      data.table(GO = unique(protein_go_df[id, "GOID"]), pvalue = 0)
+      data.table(GO = unique(data$protein_go_df[id, "GOID"]), pvalue = 0)
     })
   }
   graph

@@ -79,10 +79,10 @@ load_data <- function(config="config.yaml", neighbours=0, confidence=0,
 #'@export
 get_graph <- function(filter, neighbours = 0, max_neighbours=Inf, simple = F, omit_lipids = F,
                       type = "Immune process by name", search_mode = "Interacts", verbose = T){
-  if (verbose) loginfo(sprintf("Build graph: %s", paste(filter, sep = ", ")))
+  loginfo(sprintf("Build graph: %s", paste(filter, sep = ", ")))
   env <- sys.frame()
   if (is.null(env$interactions)) stop("No data loaded. Run 'load_data(config_path)' first.", call. = F)
-    df <- data_filter(filter, neighbours, max_neighbours, type, search_mode, omit_lipids)
+    df <- data_filter(filter, neighbours, max_neighbours, type, search_mode, omit_lipids = omit_lipids)
     if (nrow(df) > 0){
         graph <- simplify(graph_from_data_frame(df, directed = F), edge.attr.comb = "mean")
         graph$main <- filter

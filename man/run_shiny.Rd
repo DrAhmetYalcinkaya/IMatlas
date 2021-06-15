@@ -4,7 +4,15 @@
 \alias{run_shiny}
 \title{Run Shiny App}
 \usage{
-run_shiny()
+run_shiny(
+   browser = TRUE,
+   port = 2222
+)
+}
+\arguments{
+\item{browser}{Should the browser be started?}
+
+\item{port}{Which port to be used}
 }
 \description{
 Run Shiny App
