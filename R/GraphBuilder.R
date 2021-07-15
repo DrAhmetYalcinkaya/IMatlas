@@ -10,12 +10,12 @@
 #'@importFrom dplyr %>%
 #'@importFrom igraph is.igraph
 #'@noRd
-to_graph <- function(graph, type, verbose = FALSE){
+to_graph <- function(graph, type, omit_lipids = F, verbose = FALSE){
   if (is.igraph(graph)){
     settings <- sys.frame()
     graph <- graph %>%
       add_centrality(isolate(settings$size())) %>%
-      add_precision() %>%
+      add_precision(omit_lipids) %>%
       add_gos(verbose = verbose) %>%
       add_node_pvalues(order = isolate(settings$usage_order()))
     
@@ -200,10 +200,10 @@ add_node_pvalues <- function(graph,  order = 1){
 #'@param graph placeholder
 #'@importFrom igraph neighborhood.size
 #'@export
-add_precision <- function(graph){
+add_precision <- function(graph, omit_lipids=F){
   if (is.igraph(graph)){
     loginfo("Adding metabolite precision")
-    background <- get_graph("immune system process", simple = T, omit_lipids = F, verbose = F)
+    background <- get_graph("immune system process", simple = T, omit_lipids = omit_lipids, verbose = F) # what if plot is without lipids?
     V(graph)$Precision <- 0
     to_calculate <- V(graph)$name[which(V(graph)$name %in% V(background)$name)]
     if (length(to_calculate) > 0){
@@ -303,13 +303,17 @@ add_vertice_colors <- function(graph, is_reactive = FALSE,
 #'scale_fill_discrete
 #'@noRd
 #'@importFrom rlang .data
-to_gg_plot <- function(graph){
+to_gg_plot <- function(graph, names = NULL){
   if (is.igraph(graph)){
     settings <- sys.frame()
     if (!settings$is_reactive) graph_filter <- reactiveVal()
     
     colnames(graph$layout) <- c("x", "y")
     df <- cbind(igraph::as_data_frame(graph, what = "vertices"), graph$layout)
+    if (!is.null(names)){
+      V(graph)$name <- names
+      print(V(graph)$name)
+    }
       Name <- sprintf("Name: %s<br>Centrality: %.2f", V(graph)$name, V(graph)$Centrality)
       gg <- ggplot(df, aes(x = .data$x, y = .data$y, fill = .data$type, 
                            customdata = .data$id, text = Name))
@@ -341,13 +345,13 @@ to_gg_plot <- function(graph){
 #'@importFrom plotly ggplotly layout config
 #'@importFrom htmlwidgets onRender
 #'@export
-to_plotly <- function(graph){
+to_plotly <- function(graph, names = NULL){
   if (is.igraph(graph)){
     
     ax <- list(title = "", zeroline = FALSE, showline = FALSE, showticklabels = FALSE,
                showgrid = FALSE, autorange = TRUE
     )
-    p <- ggplotly(to_gg_plot(graph), tooltip = c("text")) %>%
+    p <- ggplotly(to_gg_plot(graph, names), tooltip = c("text")) %>%
       plotly::layout(showlegend = T, xaxis = ax, yaxis = ax) %>% 
       plotly::config(scrollZoom = TRUE, toImageButtonOptions = list(format = "svg"), 
                      displaylogo = F, editable = F, modeBarButtonsToRemove = 

@@ -24,7 +24,7 @@ get_gos <- function(options){
 #')
 #'@param options List object constructed from a YAML file
 #'@importFrom stringr str_match 
-#'@noRd
+#'@export
 adjust_folder <- function(options){
   if (is.na(str_match(options$folder, ".*/$"))){
     options$folder <- paste0(options$folder, "/")

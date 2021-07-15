@@ -34,10 +34,6 @@ load_data <- function(config="config.yaml", neighbours=0, confidence=0,
     prot_file <- prot_files[[names(prot_files)[neighbours + 1]]]
     env$pp_confidence <- reactiveVal(confidence)
     load_interaction_data(prot_file, confidence)
-    #if (full){
-    #  env$go_metabolite <- read_file("go_metabolite.csv")
-    #}
-    
     env$offspring <- as.list(GO.db::GOBPOFFSPRING)
     env$is_reactive = F
     if (verbose){
@@ -88,7 +84,7 @@ get_graph <- function(filter, neighbours = 0, max_neighbours=Inf, simple = F, om
         graph$main <- filter
         V(graph)$id <- V(graph)$name
         V(graph)$name <- convert_ids_to_names(V(graph)$id)
-        if (!simple) graph <- to_graph(graph, type, verbose)
+        if (!simple) graph <- to_graph(graph, type, omit_lipids, verbose)
         if (verbose){
           loginfo(sprintf("Search filter: %s",  paste(graph$main, collapse = ", ")))
           loginfo(sprintf("Found %d nodes & %d edges",  vcount(graph), ecount(graph)))
@@ -135,9 +131,10 @@ get_metabolite_metadata <- function(graph, metadata){
 #'}
 #'@export
 example_graph <- function(omit_lipids = F){
-    get_graph("microglial cell activation", type = "Immune process by name", 
+    get_graph("positive regulation of T cell mediated immunity", 
+              type = "Immune process by name", 
               neighbours = 0, max_neighbours = Inf, simple = F, 
-              omit_lipids=omit_lipids, verbose = T)
+              omit_lipids = omit_lipids, verbose = T)
 }
 
 #'@title Return a long-format DataFrame with GO-Pvalue combinations per metabolite
@@ -224,178 +221,53 @@ run_textmining <- function(config_path="config.yaml"){
       env$options <- adjust_folder(yaml::read_yaml(config_path))
       message("Executing text mining, please wait.")
       file <- system.file("Python", "Textmining.py", package = "ImmunoMet", mustWork = T)
-      reticulate::py_run_file(file, convert = F)
+      python <- py_config()$python
+      command <- sprintf("%s %s %s", python, file, config_path)
+      system(command)
       message("Text mining succesful")
     }
   }
 }
 
-#'@title Perform text mining analysis
-#'@usage textmining_analysis(
-#'    config_path = "config.yaml",
-#'    font = 18
+#'@title Get a summary of a process graph
+#'@usage get_process_summary(
+#'    graph
 #')
-#'@param config_path placeholder
-#'@param font placeholder
-#'@importFrom networkD3 sankeyNetwork
-#'@importFrom data.table fread
-#'@importFrom stats aggregate
+#'@param graph iGraph object obtained from to_graph() or get_graph()
 #'@export
-textmining_analysis <- function(config_path="config.yaml", font = 18){
-  env <- sys.frame()
-  if (is.null(env$interactions)){
-    stop("No data loaded. Please run 'load_data(config_path)' first.", call. = F)
-  } 
-  options <- adjust_folder(yaml::read_yaml(config_path))
-  source <- paste0(options$folder, "textmining_all.tsv")
-  if (!file.exists(source)){
-    stop("No text mining data found. Please run 'run_textmining(config_path)' first.", call. = F)
-  }
-
-  graph <- get_graph("immune system process", simple = T, verbose = F) %>%
-    add_gos(env$protein_go_df) %>%
-    add_node_pvalues(env$protein_go_df) %>%
-    filter_metabolites()
-  
-  list <- sapply(V(graph)$go, USE.NAMES = T, function(x) x$GO)
-  
-  names(list) <- V(graph)$name
-  go_metabolite <- stack(list)
-  colnames(go_metabolite) <- c("GO", "Metabolite")
-  
-  go_metabolite$Metabolite <- get_metabolite_ids(as.vector(go_metabolite$Metabolite))
-  
-  
-  text_ext <- unique(fread(source, sep = "\t", data.table = F)[,c(1, 2)])
-  colnames(text_ext) <- c("GO", "Metabolite")
-  text_ext$GO <- get_go_ids(text_ext$GO)
-  text_ext$Metabolite <- get_metabolite_ids(text_ext$Metabolite)
-  
-  atlas <- unique(go_metabolite$Metabolite)
-  atlas_lipids <- atlas[get_superclass(atlas) == "Lipids and lipid-like molecules"]
-  atlas_no_lipids <- atlas[get_superclass(atlas) != "Lipids and lipid-like molecules"]
-  
-  
-  textmining <- unique(text_ext$Metabolite)
-  tm_lipids <- textmining[get_superclass(textmining) == "Lipids and lipid-like molecules"]
-  tm_no_lipids <- textmining[get_superclass(textmining) != "Lipids and lipid-like molecules"]
-  
-  excl_atlas <- atlas_no_lipids[!atlas_no_lipids %in% tm_no_lipids]
-  excl_tm <- tm_no_lipids[!tm_no_lipids %in% atlas_no_lipids]
-  both <- c(atlas_no_lipids, tm_no_lipids)
-  both <- unique(both[!both %in% excl_atlas & !both %in% excl_tm])
-  
-  pm_interactions <- read_file("Metabolite_uniprot_id.csv")
-  colnames(pm_interactions) <- c("From", "To")
-  
-  has_interaction <- excl_tm[excl_tm %in% c(t(env$mm_interactions), pm_interactions$From)]
-  no_interaction <- excl_tm[!excl_tm %in% has_interaction]
-  
-  mm_interaction <- has_interaction[has_interaction %in% c(t(env$mm_interactions))]
-  pm_interaction <- has_interaction[has_interaction %in% pm_interactions$From]
-  
-  both_interaction <- intersect(mm_interaction, pm_interaction)
-  pm_interaction <- pm_interaction[!pm_interaction %in% both_interaction]
-  mm_interaction <- mm_interaction[!mm_interaction %in% both_interaction]
-  
-  
-  query_builder <- function(term){
-    term <- gsub(" ", "%20", term)
-    base <- "https://www.ebi.ac.uk/europepmc/webservices/rest/search"
-    fields <- '(ABSTRACT:"%s" OR RESULTS:"%s" OR METHODS:"%s" OR TABLE:"%s" OR SUPPL:"%s" OR FIG:"%s")'
-    fields <- gsub(" ", "%20", fields)
-    query <- gsub("%s", term, fields)
-    requirements <- sprintf(' AND CHEBITERM:"%s" AND PUB_TYPE:"Journal Article" AND SRC:"MED" AND ORGANISM:"HUMAN"', term)
-    requirements <- gsub(" ", "%20", requirements)
-    query <- paste0(query, requirements)
-    meta <- "synonym=true&resultType=idlist&pageSize=1000&cursorMark=*&format=json"
-    url <- sprintf("%s?query=%s&%s", base, query, meta)
-    return(url)
-  }
-  
-  res <- unlist(lapply(get_metabolite_names(excl_atlas), function(name){
-    content(GET(query_builder(name)))$hitCount > 0
-  }))
-  
-  no_link_with_immune <- excl_atlas[res]
-  not_found <- excl_atlas[!res]
-  
-  
-  to_plot <- list(
-    Non.Lipids = data.frame(node = c(
-      "Non-lipids",
-      "Only in Atlas","Only in Text Mining","Present in Both",
-      "No interaction known","Interaction known","Metabolite interaction(s)",
-      "Protein interaction(s)","Both interactions", "No immune system relation", "No text mining hit"
-    ), stringsAsFactors = T),
-    
-    Links_nonlipid = data.frame(
-      source = c(0, 0, 0, 2, 2, 5, 5, 5, 1, 1),
-      target = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
-      value = c(
-        length(excl_atlas),
-        length(excl_tm),
-        length(both),
-        length(no_interaction),
-        length(has_interaction),
-        length(mm_interaction),
-        length(pm_interaction),
-        length(both_interaction),
-        length(no_link_with_immune),
-        length(not_found)
+get_process_summary <- function(graph){
+  if (graph$main %in% go_name_df$Name){
+    graph <- graph %>% filter_metabolites()
+    df <- do.call(rbind, lapply(1:vcount(graph), function(x){
+      data.frame(HMDB = V(graph)[x]$id,
+                 Metabolite = V(graph)[x]$name,
+                 Centrality = as.double(V(graph)[x]$Centrality),
+                 Precision = round(as.double(V(graph)[x]$Precision), 3),
+                 Pvalue = unlist(V(graph)[[x]]$go)[get_go_ids(graph$main)],
+                 Process = graph$main
       )
-    )
-  )
-  
-  
-  to_plot$Links_nonlipid <- to_plot$Links_nonlipid[to_plot$Links_nonlipid$value > 0,]
-  
-  source <- aggregate(to_plot$Links_nonlipid$value, by=list(to_plot$Links_nonlipid$source), sum) 
-  target <- aggregate(to_plot$Links_nonlipid$value, by=list(to_plot$Links_nonlipid$target), sum) 
-  
-  a <- to_plot$Non.Lipids
-  a$Group.1 <- as.integer(rownames(to_plot$Non.Lipids)) - 1
-  
-  
-  a <- left_join(a, by = "Group.1", source)
-  a <- left_join(a, by = "Group.1", target)
-  to_plot$Non.Lipids$amount <- coalesce(a$x.x, a$x.y)
-  
-  to_plot$Non.Lipids$node <- do.call(paste, to_plot$Non.Lipids)
-  plot <- sankeyNetwork(Links = to_plot$Links_nonlipid, Nodes = to_plot$Non.Lipids, 
-                        sinksRight = F,
-                        Source = "source",
-                        Target = "target", 
-                        Value = "value", 
-                        NodeID = "node", units = "Metabolites", 
-                        fontSize = font, nodeWidth = 30, fontFamily = "Helvetica")
-  
-  
-  confusion_table <- function(TP, FP, FN, TN){
-    data.frame(TM = c(TP, FN), 
-               Non_TM = c(FP, TN), 
-               row.names = c("Atlas", "Non_Atlas"))
+    })) 
+    rownames(df) <- 1:nrow(df)
+    df$Precision <- df$Precision / max(df$Precision)
+    df[,c("HMDB", "Metabolite", "Process", "Pvalue", "Centrality", "Precision")]
+  } else {
+    stop("Not a process graph")
   }
-  
-  TP <- length(both) # TP
-  FP <- length(excl_atlas) # FP
-  FN <- length(excl_tm) # FN
-  super_class <- ID <- NULL
-  TN <- env$met_superclass %>% 
-    filter(super_class != "Lipids and lipid-like molecules") %>% 
-    filter(!ID %in% c(excl_atlas, excl_tm, both)) %>%
-    nrow()
-  
-  metabolites <- confusion_table(TP, FP, FN, TN)
-  
-  go_metabolite <- go_metabolite[get_superclass(go_metabolite$Metabolite) != "Lipids and lipid-like molecules",]
-  text_ext <- text_ext[get_superclass(text_ext$Metabolite) != "Lipids and lipid-like molecules",]
-  
-  TP <- sum(paste(go_metabolite$GO, go_metabolite$Metabolite) %in% paste(text_ext$GO, text_ext$Metabolite))
-  FP <- sum(!paste(go_metabolite$GO, go_metabolite$Metabolite) %in% paste(text_ext$GO, text_ext$Metabolite))
-  FN <- sum(!paste(text_ext$GO, text_ext$Metabolite) %in% paste(go_metabolite$GO, go_metabolite$Metabolite))
-  TN <- length(unique(text_ext$Metabolite)) * nrow(env$go_name_df) - TP - FP - FN
-  
-  metabolite_go <- confusion_table(TP, FP, FN, TN)
-  list(plot = plot, metabolite_conf = metabolites, metabolite_go_conf = metabolite_go)
 }
+
+#'@title Get a summary of the graph
+#'@usage get_graph_summary(
+#'    graph
+#')
+#'@param graph iGraph object obtained from to_graph() or get_graph()
+#'@export
+get_graph_summary <- function(graph){
+  graph <- graph %>% filter_metabolites()
+  gos <- suppressMessages(reshape::melt.list(setNames(lapply(V(graph)$go, stack), V(graph)$name)))
+  gos <- gos[,-which(colnames(gos) == "variable")]
+  colnames(gos) <- c("Process", "Pvalue", "Metabolite")
+  gos$Process <- get_go_names(gos$Process)
+  gos$HMDB <- get_metabolite_ids(gos$Metabolite)
+  gos[order(gos$Pvalue, decreasing = F),c("HMDB", "Metabolite", "Process", "Pvalue")]
+}
+

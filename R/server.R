@@ -13,7 +13,7 @@ default_settings <- function(){
   settings$size <- reactiveVal(12)
   settings$search_mode <- reactiveVal("Interacts")
   settings$pp_confidence <- reactiveVal(700)
-  settings$omitting_lipids <- reactiveVal(TRUE)
+  settings$omitting_lipids <- reactiveVal(FALSE)
   settings$usage_order <- reactiveVal(1)
 }
 

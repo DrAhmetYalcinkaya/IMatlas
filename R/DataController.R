@@ -162,7 +162,7 @@ get_process_table <- function(graph, nodes = V(graph)){
     df <- graph %>%
       filter_metabolites() %>%
       igraph::as_data_frame(what = "vertices") %>%
-      select(id, go)
+      dplyr::select(id, go)
     df <- df[nodes, ]
     
     if (length(unlist(df$go)) > 0){
@@ -186,8 +186,6 @@ get_process_table <- function(graph, nodes = V(graph)){
   }
   
 }
-
-
 
 #'@title Get Plotly barplot for Gene Ontologies
 #'@usage get_go_barplot(
