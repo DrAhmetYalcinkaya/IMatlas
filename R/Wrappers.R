@@ -271,3 +271,20 @@ get_graph_summary <- function(graph){
   gos[order(gos$Pvalue, decreasing = F),c("HMDB", "Metabolite", "Process", "Pvalue")]
 }
 
+#'@title Get a summary of all nodes in a graph
+#'@usage get_node_summary(
+#'    graph
+#')
+#'@param graph iGraph object obtained from to_graph() or get_graph()
+#'@export
+get_node_summary <- function(graph){
+  df <- NULL
+  if (is.igraph(graph)){
+    id <- Centrality <- Precision <- type <- class <- superclass <- NULL
+    df <- graph %>%
+      filter_metabolites() %>%
+      igraph::as_data_frame(what = "vertices") %>%
+      select(id, Centrality, Precision, type, class, superclass)
+  }
+  df
+}
