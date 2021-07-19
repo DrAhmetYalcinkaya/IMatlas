@@ -1,49 +1,17 @@
 Package: IMatlas
+Title: What the Package Does (One Line, Title Case)
+Version: 0.0.0.9000
 Title: a tool for design and interpretation of metabolomics studies in immunology 
 Version: 0.1
 Authors@R: 
     person(given = "Pascal",
            family = "Maas",
-           role = "aut",
+           role = c("aut","cre"),
            email = "p.maas@lacdr.leidenuniv.nl")
-Description: IMatlas is a public web application and library of R functions to infer immune processes associated with specific metabolites and vice versa. 
-The IMA derives metabolite-immune process associations utilizing a protein-metabolite network analysis algorithm that associates 
-immune system-associated annotated proteins in Gene Ontology to metabolites. 
+Description: IMatlas is a public web application and library of R functions to infer immune processes associated with specific metabolites and vice versa. The IMA derives metabolite-immune process associations utilizing a protein-metabolite network analysis algorithm that associates immune system-associated annotated proteins in Gene Ontology to metabolites. 
 License: MIT + file LICENSE
 biocViews: 
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
-Imports: 
-    AnnotationDbi,
-    colourpicker,
-    data.table,
-    dplyr,
-    DT,
-    formattable,
-    ggplot2,
-    GO.db,
-    heatmaply,
-    htmlwidgets,
-    httr,
-    igraph,
-    logging,
-    networkD3,
-    pbapply,
-    plotly,
-    plyr,
-    RColorBrewer,
-    reshape2,
-    reticulate,
-    rlang,
-    shiny,
-    shinyalert,
-    shinycssloaders,
-    shinydashboard,
-    shinyjs,
-    shinythemes,
-    stringr,
-    viridis,
-    waiter,
-    yaml
