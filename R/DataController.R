@@ -141,6 +141,9 @@ get_node_table <- function(graph, nodes = V(graph)){
       igraph::as_data_frame(what = "vertices") %>%
       select(id, Centrality, Precision, type, class, superclass)
     
+    df$Centrality <- round(df$Centrality, 3)
+    df$Precision <- round(df$Precision, 3)
+    
     datatable(df[nodes, ], selection = "none", extensions = 'Buttons', options = get_options(), 
               class = 'cell-border stripe', escape = F, style = "bootstrap")
   }

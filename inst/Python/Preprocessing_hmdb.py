@@ -106,12 +106,13 @@ class HMDB:
             self.set_variables(source = z, chunk_by = "metabolite", 
                         fields = ["accession", "chebi_id", "uniprot_id", 
                                   "class", "kegg_map_id", "super_class", "description", "traditional_iupac",
-                                  "biospecimen", "cellular", "name", "pathway", "term"],
+                                  "biospecimen", "cellular", "name", "pathway", "term", "kingdom"],
                         exclude = ["term", "kegg_map_id", "chebi_id", "description", "traditional_iupac"])
             with tqdm(desc = "Extracting HMDB") as pbar:
                 for n, chunk in enumerate(self.chunk()):
                     terms = {x.text for x in chunk.findall("term")}
-                    if ("Biological role" in terms or "Naturally occurring process" in terms) and not self.is_drug(chunk, terms):
+                    kingdom = str(chunk.findtext("kingdom"))
+                    if ("Biological role" in terms or "Naturally occurring process" in terms) and not self.is_drug(chunk, terms) and kingdom == "Organic compounds":
                         count += self.process_metabolite(chunk)
                     pbar.update(1)
         self.close()  

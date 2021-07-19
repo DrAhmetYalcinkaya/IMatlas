@@ -203,12 +203,13 @@ add_node_pvalues <- function(graph,  order = 1){
 add_precision <- function(graph, omit_lipids=F){
   if (is.igraph(graph)){
     loginfo("Adding metabolite precision")
-    background <- get_graph("immune system process", simple = T, omit_lipids = omit_lipids, verbose = F) # what if plot is without lipids?
+    background <- get_graph("immune system process", simple = T, omit_lipids = TRUE, verbose = F) # what if plot is without lipids?
     V(graph)$Precision <- 0
     to_calculate <- V(graph)$name[which(V(graph)$name %in% V(background)$name)]
     if (length(to_calculate) > 0){
-      all_ratio <- neighborhood.size(background, nodes = V(background)[to_calculate]) * vcount(graph)
-      V(graph)[to_calculate]$Precision <- neighborhood.size(graph %>% induced_subgraph(vids = V(graph)[to_calculate])) / all_ratio
+      all_ratio <- neighborhood.size(background, nodes = V(background)[to_calculate]) - 1
+      ratio <- neighborhood.size(graph %>% induced_subgraph(vids = V(graph)[to_calculate])) - 1
+      V(graph)[to_calculate]$Precision <- ratio / all_ratio
     }
   }
   graph
