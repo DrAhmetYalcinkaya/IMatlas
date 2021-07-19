@@ -1,13 +1,14 @@
-Package: ImmunoMet
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
+Package: IMatlas
+Title: a tool for design and interpretation of metabolomics studies in immunology 
+Version: 0.1
 Authors@R: 
-    person(given = "First",
-           family = "Last",
-           role = c("aut", "cre"),
-           email = "first.last@example.com",
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+    person(given = "Pascal",
+           family = "Maas",
+           role = "aut",
+           email = "p.maas@lacdr.leidenuniv.nl")
+Description: IMatlas is a public web application and library of R functions to infer immune processes associated with specific metabolites and vice versa. 
+The IMA derives metabolite-immune process associations utilizing a protein-metabolite network analysis algorithm that associates 
+immune system-associated annotated proteins in Gene Ontology to metabolites. 
 License: MIT + file LICENSE
 biocViews: 
 Encoding: UTF-8
