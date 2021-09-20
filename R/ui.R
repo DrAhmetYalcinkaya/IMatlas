@@ -71,8 +71,8 @@ ui <- function(){
                 dashboardBody(
                   shinyjs::hidden(
                     div(id = "main_page",
-                        includeScript(system.file("www", "listeners.js", package = "ImmunoMet", mustWork = T)),
-                        tags$head(includeCSS(system.file("www", "style.css", package = "ImmunoMet", mustWork = T))),
+                        includeScript(system.file("www", "listeners.js", package = "IMatlas", mustWork = T)),
+                        tags$head(includeCSS(system.file("www", "style.css", package = "IMatlas", mustWork = T))),
                         tabItems(
                           tabItem(tabName = "home", div(id="dashboardTab", 
                                                         fluidRow(div(class = "dashboard_head1"), align = "center", column(width = 1),

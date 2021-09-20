@@ -81,8 +81,8 @@ add_centrality <- function(graph, size=12){
 remove_unconnected <- function(graph){
   if (is.igraph(graph)){
     loginfo("Removing unconnected nodes")
-    keep <- which(degree(graph) > 0)
-    graph <- induced.subgraph(graph, V(graph)[keep])
+    graph <- delete.vertices(graph, degree(graph)==0) %>%
+      add_layout()
   }
   graph
 }

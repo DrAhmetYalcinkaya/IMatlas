@@ -20,7 +20,7 @@ from math import ceil
 from concurrent.futures import ThreadPoolExecutor
 import sys
 from pathlib import Path
-
+import logging
 from tqdm import tqdm 
 
 
@@ -221,25 +221,28 @@ def main(config_path):
     This is done to not only find direct associations, but also implied ones using
     the ancestors of the matched GO names. 
     """
+    logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
+
     with open(config_path) as file: 
         options = yaml.load(file, Loader=yaml.FullLoader)
         Path(options["folder"]).mkdir(parents=True, exist_ok=True)
-    log = open(f"{options['folder']}/Log_textmining.txt", "w", buffering=1)
 
-    text_mining = TextMining(options, log)
-    ebi = EBI(options, log)
+    text_mining = TextMining(options)
+    ebi = EBI(options)
     
     gos = list(set(pd.read_csv(f"{options['folder']}/Go_names.csv")["Name"]))
     mets = list(set(pd.read_csv(f"{options['folder']}/Metabolite_name.csv")["name"]))
+    logging.info("Start mining GO-terms")
     gos = text_mining.search_all(gos, type = "GO")
     #with open("gos.json", "w") as outfile: 
     #    json.dump(gos, outfile) 
+    logging.info("Start mining Metabolites")
     mets = text_mining.search_all(mets, type = "Metabolite")
     #with open("mets.json", "w") as outfile: 
     #    json.dump(mets, outfile)
     #gos = json.load(open("gos.json"))
     #mets = json.load(open("mets.json"))
-
+    logging.info("Start finding co-occurrences")
     df = find_overlap(mets, gos)
     df = get_expanded_df(ebi, df, options)
     df.to_csv(f"{options['folder']}/textmining_all.tsv", sep="\t", index = False)

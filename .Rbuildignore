@@ -1,7 +1,0 @@
-^.*\.Rproj$
-^\.Rproj\.user$
-^LICENSE\.md$
-^Data.*$
-^NonPackageCode.*$
-^Other.*$
-^build.R$
