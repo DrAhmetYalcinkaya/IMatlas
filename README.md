@@ -1,10 +1,10 @@
-Immuno Metabolome Atlas
+The Immunometabolic Atlas
 ================
 
 ## Introduction
 
-This R package is part of our publication called “Immuno metabolome
-atlas”. It is able to construct immune system-related protein-metabolite
+This R package is part of our publication called “The Immunometabolic Atlas”. 
+It is able to construct immune system-related protein-metabolite
 interaction networks. The package features an RShiny application, but
 also a set of tools for constructing graphs and identifying important
 biological processes.
@@ -15,7 +15,7 @@ Use the `devtools` package to install our package and dependencies.
 
 ``` r
 install.packages("devtools")
-devtools::install_github("vanhasseltlab/ImmuneMetAtlas")
+devtools::install_github("vanhasseltlab/IMatlas")
 ```
 
 ## Getting Started
@@ -46,14 +46,14 @@ given folder in the configuration file. Preprocessing is done by running
 the following code:
 
 ``` r
-library(ImmunoMet)
+library(IMatlas)
 run_preprocessing("path/to/config.yaml")
 ```
 
 ### Start the RShiny app
 
 ``` r
-library(ImmunoMet)
+library(IMatlas)
 load_data(config = "path/to/config.yaml")
 run_shiny()
 ```
@@ -63,7 +63,7 @@ run_shiny()
 Example, static graph
 
 ``` r
-library(ImmunoMet)
+library(IMatlas)
 load_data(config = "path/to/config.yaml")
 graph <- example_graph()
 plot(graph)
