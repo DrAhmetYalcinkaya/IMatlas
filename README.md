@@ -1,10 +1,11 @@
 ## Introduction
 
 This R package is part of our publication called “The Immunometabolic
-Atlas”. It is able to construct immune system-related protein-metabolite
-interaction networks. The package features an RShiny application, but
-also a set of tools for constructing graphs and identifying important
-biological processes.
+Atlas: a tool for design and interpretation of metabolomics studies in
+immunology”. It is able to construct immune system-related
+protein-metabolite interaction networks. The package features an RShiny
+application and a set of tools for constructing graphs and identifying
+biological processes associated with metabolites.
 
 ## Installation
 
@@ -45,7 +46,7 @@ the following code:
 
 ### Start the RShiny app
 
-Once the preprocessing is done, the Immunometabolic atlas can be used.
+Once the preprocessing is done, the Immunometabolic Atlas can be used.
 
     load_data(config = "path/to/config.yaml")
     run_shiny()
@@ -79,8 +80,8 @@ examples.
 <caption>Arguments to be used with <code>get_graph()</code></caption>
 <colgroup>
 <col style="width: 4%" />
-<col style="width: 4%" />
-<col style="width: 91%" />
+<col style="width: 6%" />
+<col style="width: 88%" />
 </colgroup>
 <thead>
 <tr class="header">
@@ -117,8 +118,8 @@ examples.
 </tr>
 <tr class="even">
 <td style="text-align: left;">type</td>
-<td style="text-align: left;">Gene Ontology</td>
-<td style="text-align: left;">Type of the search filter. Can be one of the following: <code>Gene Ontology</code>, <code>Metabolite/Proteins</code>, <code>Pathways</code>, <code>GO Simple</code>, <code>Superclasses</code>, <code>Classes</code>.</td>
+<td style="text-align: left;">Immune process by name</td>
+<td style="text-align: left;">Type of the search filter. Can be one of the following: <code>Immune process by name</code>, <code>Metabolites by name</code>, <code>Metabolite by HMDB identifier</code>, <code>Biochemical pathway by name</code>, <code>Immune process by name (without proteins)</code>, <code>Metabolite superclass by name</code>, <code>Metabolite class by name</code>.</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">search_mode</td>
@@ -230,11 +231,11 @@ table below the example.
 </tr>
 <tr class="odd">
 <td style="text-align: left;"><code>add_metadata</code></td>
-<td style="text-align: left;">Adds vertice metadata about enzymes, pathways, and (super)classes</td>
+<td style="text-align: left;">Adds vertice metadata about pathways, classes and superclasses</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;"><code>add_node_types</code></td>
-<td style="text-align: left;">Adds types about each node</td>
+<td style="text-align: left;">Adds the type of each node</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;"><code>add_vertice_colors</code></td>
@@ -245,14 +246,10 @@ table below the example.
 <td style="text-align: left;">Calculates a Fruchterman-Reingold layout so each node is placed visually pleasing.</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;"><code>add_communities</code></td>
-<td style="text-align: left;">Uses the Leiden algorithm to identify communities within the current graph.</td>
-</tr>
-<tr class="even">
 <td style="text-align: left;"><code>remove_unconnected</code></td>
 <td style="text-align: left;">Removes any node that has no interaction with other nodes.</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;"><code>metabolite_go_graph</code></td>
 <td style="text-align: left;">Convert the graph to a graph where Gene Ontologies are represented by nodes. Requires <code>add_gos</code> to be run first.</td>
 </tr>

@@ -60,7 +60,7 @@ side_bar_menu <- function(){
 #' @importFrom shinyalert useShinyalert
 #'@noRd
 ui <- function(){
-  dashboardPage(title = "Immunometabolism atlas",
+  dashboardPage(title = "The Immunometabolic Atlas",
                 dashboardHeader(title="", titleWidth = 300, disable = T),
                 dashboardSidebar(width = 300, useShinyjs(), use_waiter(), 
                                  tags$head(tags$style(".inactiveLink {
@@ -76,7 +76,7 @@ ui <- function(){
                         tabItems(
                           tabItem(tabName = "home", div(id="dashboardTab", 
                                                         fluidRow(div(class = "dashboard_head1"), align = "center", column(width = 1),
-                                                                 column(width = 8, hr(), h1("Immunometabolism atlas"),
+                                                                 column(width = 8, hr(), h1("The Immunometabolic Atlas"),
                                                                         div(id="subtitle", "The resource of interactions in the immune system"), hr()),
                                                                  column(width = 1)),
                                                         div(class = "dashboard_head2"),
