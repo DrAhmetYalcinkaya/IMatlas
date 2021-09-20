@@ -7,5 +7,3 @@ README.rmd
 NonPackageCode
 build.r
 *.pyc
-*.png
-*.svg

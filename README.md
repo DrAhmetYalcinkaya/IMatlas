@@ -1,7 +1,3 @@
-    ## 2021-09-20 18:37:44 INFO::Number of metabolite-protein interactions: 172291
-    ## 2021-09-20 18:37:44 INFO::Number of metabolite-metabolite interactions: 664
-    ## 2021-09-20 18:37:44 INFO::Number of protein-protein interactions: 411286
-
 ## Introduction
 
 This R package is part of our publication called “The Immunometabolic
