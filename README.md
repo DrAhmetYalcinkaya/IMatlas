@@ -77,7 +77,6 @@ parameters, see the documentation for additional descriptions and
 examples.
 
 <table>
-<caption>Arguments to be used with <code>get_graph()</code></caption>
 <colgroup>
 <col style="width: 4%" />
 <col style="width: 6%" />
@@ -134,13 +133,10 @@ examples.
 </tbody>
 </table>
 
-Arguments to be used with `get_graph()`
-
 If the argument `simple = FALSE` (default), metadata is included in the
 returned igraph object. This includes the following:
 
 <table>
-<caption>Metadata added to graphs by default</caption>
 <colgroup>
 <col style="width: 6%" />
 <col style="width: 93%" />
@@ -191,8 +187,6 @@ returned igraph object. This includes the following:
 </tbody>
 </table>
 
-Metadata added to graphs by default
-
 However, when `simple = TRUE`, only the `id`, `name`, and `confidence`
 are stored. Several helpers functions exist that can be chained to
 obtain metadata. These have support for the `dplyr` pipe notation. A
@@ -209,7 +203,6 @@ table below the example.
       add_layout()
 
 <table>
-<caption>Helper functions for chaining calculations and (meta)data</caption>
 <colgroup>
 <col style="width: 16%" />
 <col style="width: 83%" />
@@ -255,5 +248,3 @@ table below the example.
 </tr>
 </tbody>
 </table>
-
-Helper functions for chaining calculations and (meta)data
