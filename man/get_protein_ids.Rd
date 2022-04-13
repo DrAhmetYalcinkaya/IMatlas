@@ -4,9 +4,7 @@
 \alias{get_protein_ids}
 \title{Retrieve protein identifiers using names}
 \usage{
-get_protein_ids(
-   names
-)
+get_protein_ids(names)
 }
 \arguments{
 \item{names}{Vector of protein names}

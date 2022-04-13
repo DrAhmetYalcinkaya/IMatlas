@@ -4,9 +4,7 @@
 \alias{na_omit_list}
 \title{Remove NAs from Lists}
 \usage{
-na_omit_list(
-   y
-)
+na_omit_list(y)
 }
 \arguments{
 \item{y}{List object}

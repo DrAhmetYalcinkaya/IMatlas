@@ -4,10 +4,7 @@
 \alias{get_metabolite_metadata}
 \title{Get metadata of metabolites}
 \usage{
-get_metabolite_metadata(
-   graph,
-   metadata
-)
+get_metabolite_metadata(graph, metadata)
 }
 \arguments{
 \item{graph}{igraph object obtained from 'get_graph()'}
@@ -16,11 +13,4 @@ get_metabolite_metadata(
 }
 \description{
 Get metadata of metabolites
-}
-\examples{
-# Get GOs associated with metabolites
-\dontrun{
-g <- get_graph("microglial cell activation")
-get_metabolite_metadata(g, "go")
-}
 }

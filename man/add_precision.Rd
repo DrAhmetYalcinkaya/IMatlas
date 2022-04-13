@@ -4,12 +4,10 @@
 \alias{add_precision}
 \title{add precision score to node}
 \usage{
-add_precision(
-   graph
-)
+add_precision(graph, omit_lipids = F)
 }
 \arguments{
-\item{graph}{placeholder}
+\item{graph}{iGraph object obtained from to_graph() or get_graph()}
 }
 \description{
 add precision score to node

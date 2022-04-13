@@ -4,9 +4,7 @@
 \alias{get_2d_scatter}
 \title{Produce 2D pvalue-closeness scatter plot}
 \usage{
-get_2d_scatter(
-   graph
-)
+get_2d_scatter(graph)
 }
 \arguments{
 \item{graph}{iGraph object obtained from to_graph() or get_graph()}

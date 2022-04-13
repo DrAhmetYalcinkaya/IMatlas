@@ -4,11 +4,7 @@
 \alias{add_gos}
 \title{Assign Gene Ontologies to vertices}
 \usage{
-add_gos(
-   graph,
-   protein_go_df,
-   verbose = T
-)
+add_gos(graph, verbose = T)
 }
 \arguments{
 \item{graph}{igraph object representing your graph}

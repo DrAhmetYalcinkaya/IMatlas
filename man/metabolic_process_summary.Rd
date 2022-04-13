@@ -4,11 +4,7 @@
 \alias{metabolic_process_summary}
 \title{Return a long-format DataFrame with GO-Pvalue combinations per metabolite}
 \usage{
-metabolic_process_summary(
-   graph,
-   p = 1,
-   centrality = 0
-)
+metabolic_process_summary(graph, p = 1, centrality = 0)
 }
 \arguments{
 \item{graph}{igraph object}

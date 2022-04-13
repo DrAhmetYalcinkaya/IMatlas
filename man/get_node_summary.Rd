@@ -4,9 +4,7 @@
 \alias{get_node_summary}
 \title{Get a summary of all nodes in a graph}
 \usage{
-get_node_summary(
-   graph
-)
+get_node_summary(graph)
 }
 \arguments{
 \item{graph}{iGraph object obtained from to_graph() or get_graph()}

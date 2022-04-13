@@ -4,9 +4,7 @@
 \alias{get_metabolite_names}
 \title{Get metabolite names}
 \usage{
-get_metabolite_names(
-   ids
-)
+get_metabolite_names(ids)
 }
 \arguments{
 \item{ids}{Vector of metabolite IDs}

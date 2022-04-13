@@ -4,9 +4,7 @@
 \alias{get_proteins_by_go}
 \title{Return all proteins associated with a GO}
 \usage{
-get_proteins_by_go(
-   names
-)
+get_proteins_by_go(names)
 }
 \arguments{
 \item{names}{Vector of Gene Ontology names}

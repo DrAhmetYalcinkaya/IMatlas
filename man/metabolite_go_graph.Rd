@@ -4,9 +4,7 @@
 \alias{metabolite_go_graph}
 \title{Construct a network of metabolites and GOs}
 \usage{
-metabolite_go_graph(
-   graph
-)
+metabolite_go_graph(graph)
 }
 \arguments{
 \item{graph}{iGraph object obtained from get_graph()}

@@ -4,12 +4,7 @@
 \alias{add_vertice_colors}
 \title{Adding colors to vertices of the graph}
 \usage{
-add_vertice_colors(
-   graph,
-   is_reactive = FALSE,
-   col_met,
-   col_pro
-)
+add_vertice_colors(graph, is_reactive = FALSE, col_met, col_pro)
 }
 \arguments{
 \item{graph}{iGraph object obtained from to_graph() or get_graph()}

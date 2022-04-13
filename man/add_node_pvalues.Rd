@@ -4,18 +4,12 @@
 \alias{add_node_pvalues}
 \title{calculate all node-based pvalues}
 \usage{
-add_node_pvalues(
-   graph,
-   protein_go_df,
-   order = 1
-)
+add_node_pvalues(graph, order = 1)
 }
 \arguments{
-\item{graph}{placeholder}
+\item{graph}{iGraph object obtained from to_graph() or get_graph()}
 
 \item{order}{placeholder}
-
-\item{protein_go_df}{placeholder}
 }
 \description{
 calculate all node-based pvalues

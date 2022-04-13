@@ -4,9 +4,7 @@
 \alias{add_metadata}
 \title{Adding metadata to igraph object}
 \usage{
-add_metadata(
-   graph
-)
+add_metadata(graph)
 }
 \arguments{
 \item{graph}{iGraph object obtained from to_graph() or get_graph()}

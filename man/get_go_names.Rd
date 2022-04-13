@@ -4,9 +4,7 @@
 \alias{get_go_names}
 \title{get Gene Ontology names}
 \usage{
-get_go_names(
-   go_ids
-)
+get_go_names(go_ids)
 }
 \arguments{
 \item{go_ids}{Vector of Gene Ontology IDs}

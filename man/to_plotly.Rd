@@ -4,9 +4,7 @@
 \alias{to_plotly}
 \title{Convert igraph object to an interactive Plotly}
 \usage{
-to_plotly(
-   graph
-)
+to_plotly(graph, names = NULL)
 }
 \arguments{
 \item{graph}{iGraph object obtained from get_graph()}

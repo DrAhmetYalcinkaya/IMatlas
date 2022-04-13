@@ -4,12 +4,10 @@
 \alias{add_node_types}
 \title{Add the type of each node}
 \usage{
-add_node_types(
-   graph
-)
+add_node_types(graph)
 }
 \arguments{
-\item{graph}{placeholder}
+\item{graph}{iGraph object obtained from to_graph() or get_graph()}
 }
 \description{
 Add the type of each node
