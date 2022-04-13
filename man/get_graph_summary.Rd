@@ -4,9 +4,7 @@
 \alias{get_graph_summary}
 \title{Get a summary of the graph}
 \usage{
-get_graph_summary(
-   graph
-)
+get_graph_summary(graph)
 }
 \arguments{
 \item{graph}{iGraph object obtained from to_graph() or get_graph()}

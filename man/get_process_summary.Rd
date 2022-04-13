@@ -4,9 +4,7 @@
 \alias{get_process_summary}
 \title{Get a summary of a process graph}
 \usage{
-get_process_summary(
-   graph
-)
+get_process_summary(graph)
 }
 \arguments{
 \item{graph}{iGraph object obtained from to_graph() or get_graph()}

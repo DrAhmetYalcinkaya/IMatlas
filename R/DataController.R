@@ -94,7 +94,7 @@ get_edge_table <- function(graph, edges = E(graph)) {
 #' @noRd
 get_node_table <- function(graph, nodes = V(graph)) {
   if (is.igraph(graph) && length(nodes) > 0) {
-    df <- igraph::as_data_frame(filter_metabolites(graph), what = "vertices") %>%
+    df <- igraph::as_data_frame(graph, what = "vertices") %>% # filter_metabolites(graph)
       select(.data$id, .data$Centrality, .data$Precision, .data$type,
              .data$class, .data$superclass)
 
@@ -153,27 +153,31 @@ get_process_table <- function(graph, nodes = V(graph)) {
 #' @param graph iGraph object obtained from to_graph() or get_graph()
 #' @importFrom plotly ggplotly
 #' @importFrom ggplot2 ggplot geom_bar theme_minimal theme theme_void aes
-#' @importFrom dplyr pull .data
+#' @importFrom dplyr pull .data distinct
 #' @importFrom logging logdebug
 #' @importFrom stats reorder
 #' @noRd
 get_go_barplot <- function(graph) {
   logdebug("Building GO-barplot")
   if (is.igraph(graph)) {
-    d <- igraph::as_data_frame(filter_metabolites(graph), what = "vertices") %>%
-      pull(.data$go) %>% unlist()
 
-    df <- unique(data.frame(go = names(d), pvalues = d))
-    logdebug(sprintf("Number of GOs found: %d", length(unique(df$go))))
-    logdebug(sprintf("Number of significant GOs found: %d", nrow(df)))
+    #
+    # d <- igraph::as_data_frame(filter_metabolites(graph), what = "vertices") %>%
+    #   pull(.data$go) %>% unlist()
 
-    if (nrow(df) > 0) {
-      df$go <- get_go_names(as.vector(df$go))
-      p <- ggplot(df, aes(x = reorder(.data$go, .data$pvalues), y = .data$pvalues)) +
+
+    if (length(graph$go) > 0) {
+
+      df <- data.frame(go = names(graph$go), Name = get_go_names(names(graph$go)), pvalues = graph$go)
+      df$Name <- make.unique(substring(df$Name, 1, 40))
+
+      df$Name <- factor(with(df, reorder(df$Name, as.double(df$pvalues))))
+
+      p <- ggplot(df, aes(x = .data$Name, y = .data$pvalues, text = .data$go)) +
         geom_bar(stat = "identity") +
         theme_minimal() +
         theme(axis.text.x = element_text(angle = 45))
-      return(ggplotly(p))
+      return(ggplotly(p,  dynamicTicks = TRUE))
     } else {
       return(NULL)
     }
@@ -192,16 +196,14 @@ get_barplot <- function(graph) {
   logdebug("Building centrality barplot")
   if (is.igraph(graph)) {
     df <- igraph::as_data_frame(filter_metabolites(graph), what = "vertices")
-
     df$name <- make.unique(substring(df$name, 1, 40))
-    ggplotly(ggplot(df, aes(x = reorder(.data$name, -.data$Centrality),
-                            y = .data$Centrality, label = .data$name)) +
+    df$name <- factor(with(df, reorder(df$name, -df$Centrality)))
+    p <- ggplot(df, aes(x = .data$name, y = .data$Centrality, fill = .data$superclass)) +
       geom_bar(stat = "identity") +
       xlab("") +
       theme_minimal() +
-      theme(axis.text.x = element_text(angle = 45)),
-    tooltip = c("name", "Centrality")
-    )
+      theme(axis.text.x = element_text(angle = 45))
+    ggplotly(p, tooltip = c("name", "Centrality"), dynamicTicks = TRUE)
   }
 }
 
@@ -215,8 +217,8 @@ get_heatmap_plot <- function(graph) {
   if (is.igraph(graph)) {
     df <- 1 / igraph::shortest.paths(graph)
     df[is.infinite(df)] <- NA
-    rownames(df) <- substring(rownames(df), 1, 30)
-    colnames(df) <- substring(colnames(df), 1, 30)
+    rownames(df) <- substring(rownames(df), 1, 40)
+    colnames(df) <- substring(colnames(df), 1, 40)
     heatmaply(df, colors = brewer.pal(9, "Blues"),
       na.value = "grey", symm = T, plot_method = "plotly"
     )

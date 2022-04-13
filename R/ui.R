@@ -135,18 +135,21 @@ ui <- function() {
               tabsetPanel(
                 type = "tabs", id = "loading",
                 tabPanel(
-                  "Statistics",
-                  div(
-                    style = "width: 84vw; display: flex;",
-                    column(6, plotlyOutput("barplot_centrality", height = "70vh") %>% withSpinner(4, color = "#0dc5c1")),
-                    column(6, plotlyOutput("barplot_gos", height = "70vh") %>% withSpinner(4, color = "#0dc5c1"))
-                  ),
-                  # div(style = "width: 84vw; display: flex;",
-                  #    column(6, plotlyOutput("scatter_plot", height = "70vh") %>% withSpinner(4, color = "#0dc5c1"))
-                  # )
+                  "Centrality",
+                  plotlyOutput("barplot_centrality", height = "70vh", width = "75vw") %>%
+                    withSpinner(4, color = "#0dc5c1")
                 ),
-                tabPanel("Network", div(style = "width: 75vw;", plotlyOutput("graph", height = "100vh") %>% withSpinner(4, color = "#0dc5c1"))),
-                tabPanel("Heatmap", div(style = "width: 75vw; height: 90vh; margin-top: 1%;", plotlyOutput("heatmapplot", height = "70vh") %>% withSpinner(4, color = "#0dc5c1"))),
+                tabPanel("Gene Ontologies",
+                           plotlyOutput("barplot_gos", height = "70vh", width = "75vw") %>%
+                           withSpinner(4, color = "#0dc5c1")
+                ),
+                tabPanel("Network", plotlyOutput("graph", height = "100vh", width = "75vw") %>%
+                           withSpinner(4, color = "#0dc5c1")
+                ),
+                tabPanel("Heatmap", div(style = "height: 90vh; margin-top: 1%;",
+                                        plotlyOutput("heatmapplot", height = "70vh", width = "75vw") %>%
+                                          withSpinner(4, color = "#0dc5c1"))
+                ),
                 tabPanel(
                   "Data",
                   tabsetPanel(

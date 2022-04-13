@@ -149,7 +149,6 @@ server <- function(input, output, session) {
         output$heatmapplot <- renderPlotly(get_heatmap_plot(graph))
         output$barplot_centrality <- renderPlotly(get_barplot(graph))
         output$barplot_gos <- renderPlotly(get_go_barplot(graph))
-        # output$scatter_plot <- renderPlotly(get_2d_scatter(graph))
         output$datatable_nodes <- renderDataTable(get_node_table(graph))
         output$datatable_edges <- renderDataTable(get_edge_table(graph))
         output$datatable_processes <- renderDataTable(get_process_table(graph))
@@ -225,15 +224,15 @@ server <- function(input, output, session) {
   })
   observeEvent(input$click_id, { # show modal in graph
     loginfo(sprintf("Clicked on node: %s", input$click_id))
-    node <- V(env$graph)[get_vertice_id(env$graph, input$click_id)]
+    node <- V(graph)[get_vertice_id(graph, input$click_id)]
     loginfo(sprintf("Name: %s", node$name))
-    edges <- incident(env$graph, node)
+    edges <- incident(graph, node)
     css <- "overflow-y:scroll; max-height: 600px; margin-top: 2%; background-color:white;"
     modal <- tabsetPanel(
       type = "pills",
-      tabPanel("Proteins/Metabolites", div(style = css, get_node_table(env$graph, node))),
-      tabPanel("Interactions", div(style = css, get_edge_table(env$graph, edges))),
-      tabPanel("Processes", div(style = css, get_process_table(env$graph, node)))
+      tabPanel("Proteins/Metabolites", div(style = css, get_node_table(graph, node))),
+      tabPanel("Interactions", div(style = css, get_edge_table(graph, edges))),
+      tabPanel("Processes", div(style = css, get_process_table(graph, node)))
     )
     shinyalert::shinyalert(title = "Info", closeOnClickOutside = T, html = T, modal, size = "l")
     runjs('Shiny.setInputValue("click_id", null, {priority: "event"});')

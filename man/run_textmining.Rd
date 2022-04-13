@@ -4,9 +4,7 @@
 \alias{run_textmining}
 \title{Run the text mining}
 \usage{
-run_textmining(
-   config_path = "config.yaml"
-)
+run_textmining(config_path = "config.yaml")
 }
 \arguments{
 \item{config_path}{placeholder}

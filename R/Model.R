@@ -62,7 +62,7 @@ read_file <- function(source, index_column) {
 #' @param protein_ids Vector of protein IDs
 #' @export
 get_protein_names <- function(ids) {
-  prot_names[as.vector(ids), on = "ID", j = "Name"]
+  prot_names[as.vector(ids), on = "ID", j = "Name"]$Name
 }
 
 
@@ -70,7 +70,7 @@ get_protein_names <- function(ids) {
 #' @param names Vector of protein names
 #' @export
 get_protein_ids <- function(names) {
-  prot_names[as.vector(names), on = "Name", j = "ID"]
+  prot_names[as.vector(names), on = "Name", j = "ID"]$ID
 }
 
 
@@ -78,7 +78,7 @@ get_protein_ids <- function(names) {
 #' @param ids Vector of metabolite IDs
 #' @export
 get_metabolite_names <- function(ids) {
-  meta_names[as.vector(ids), on = "ID", j = "Name"]
+  meta_names[as.vector(ids), on = "ID", j = "Name"]$Name
 }
 
 
@@ -86,7 +86,7 @@ get_metabolite_names <- function(ids) {
 #' @param names Vector of metabolite names
 #' @export
 get_metabolite_ids <- function(names) {
-  meta_names[as.vector(names), on = "Name", j = "ID"]
+  meta_names[as.vector(names), on = "Name", j = "ID"]$ID
 }
 
 
@@ -206,7 +206,7 @@ get_all_interactions <- function(ids, interactions, mode = "both") {
 #' @noRd
 get_gos_per_protein <- function(id) {
   Name <- NULL
-  go_name_df[protein_go_df[as.vector(id), j = "GOID"], unique(Name)]
+  go_name_df[protein_go_df[as.vector(id), j = "GOID"]$GOID, unique(Name)]
 }
 
 
@@ -221,7 +221,7 @@ get_all_protein_gos <- function(ids) {
 #' @param ids Vector of metabolite identifiers
 #' @noRd
 get_class <- function(ids) {
-  met_class[as.vector(ids), j = "class"]
+  met_class[as.vector(ids), j = "class"]$class
 }
 
 
@@ -229,7 +229,7 @@ get_class <- function(ids) {
 #' @param ids Vector of metabolite identifiers
 #' @noRd
 get_superclass <- function(ids) {
-  met_superclass[as.vector(ids), j = "super_class"]
+  met_superclass[as.vector(ids), j = "super_class"]$super_class
 }
 
 
@@ -237,7 +237,7 @@ get_superclass <- function(ids) {
 #' @noRd
 get_all_pathways <- function(ids, met_path) {
   sapply(as.vector(ids), simplify = F, USE.NAMES = T,
-         function(x) met_path[x, j = "pathway"])
+         function(x) met_path[x, j = "pathway"]$pathway)
 }
 
 
@@ -249,7 +249,7 @@ get_all_pathways <- function(ids, met_path) {
 #' @param filter Vector of pathway names
 #' @noRd
 get_ids_from_pathways <- function(pathways) {
-  met_path[as.vector(pathways), on = "pathway", j = "ID"]
+  met_path[as.vector(pathways), on = "pathway", j = "ID"]$ID
 }
 
 
@@ -257,7 +257,7 @@ get_ids_from_pathways <- function(pathways) {
 #' @param filter Vector of metabolite superclass names
 #' @noRd
 get_ids_from_superclass <- function(superclass) {
-  met_superclass[as.vector(superclass), on = "super_class", j = "ID"]
+  met_superclass[as.vector(superclass), on = "super_class", j = "ID"]$ID
 }
 
 #' @title Get metabolite identifiers by class
@@ -267,7 +267,7 @@ get_ids_from_superclass <- function(superclass) {
 #' @param filter Vector of metabolite class names
 #' @noRd
 get_ids_from_class <- function(class) {
-  met_class[as.vector(class), on = "class", j = "ID"]
+  met_class[as.vector(class), on = "class", j = "ID"]$ID
 }
 
 #' @title Convert identifiers to names
@@ -341,7 +341,7 @@ get_sorted_interaction_names <- function() {
 get_go_ids <- function(gos) {
   gos <- as.vector(gos)
   if (!is.null(gos)) {
-    go_name_df[gos, on = "Name", j = "GOID"]
+    go_name_df[gos, on = "Name", j = "GOID"]$GOID
   }
 }
 
