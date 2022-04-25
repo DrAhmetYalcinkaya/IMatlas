@@ -98,7 +98,7 @@ get_go_names <- function(go_ids) {
   if (is.null(go_ids)) {
     return(NA)
   }
-  go_name_df[go_ids, j = "Name", allow.cartesian = T]
+  go_name_df[go_ids, j = "Name", allow.cartesian = T]$Name
 }
 
 
