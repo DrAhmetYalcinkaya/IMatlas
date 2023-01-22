@@ -85,6 +85,7 @@ create_settings <- function() {
     )
   )
 }
+
 #' @title Shiny server
 #' @param input Reactive variable containing all inputs from the user
 #' @param output Reactive variable containing all outputs to the server
@@ -100,6 +101,7 @@ create_settings <- function() {
 #' @importFrom DT renderDataTable
 #' @noRd
 server <- function(input, output, session) {
+  library(IMatlas)
   waiter::waiter_show(html = div(h2("Loading the Atlas"), waiter::spin_flower()))
   output$readme <- renderUI(includeHTML("README.html"))
   env <- sys.frame()

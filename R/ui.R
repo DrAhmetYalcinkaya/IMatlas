@@ -74,6 +74,7 @@ side_bar_menu <- function() {
 #' @importFrom shinyalert useShinyalert
 #' @noRd
 ui <- function() {
+  library(IMatlas)
   dashboardPage(
     title = "The Immunometabolic Atlas",
     dashboardHeader(title = "", titleWidth = 300, disable = T),
