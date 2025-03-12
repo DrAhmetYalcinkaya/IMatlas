@@ -2,7 +2,9 @@
 
 import pip
 import warnings
-from pandas.core.common import SettingWithCopyWarning
+import pandas as pd  # Ensure pandas is imported
+from pandas.errors import SettingWithCopyWarning  # Correct import
+
 warnings.simplefilter(action='ignore', category=FutureWarning)
 warnings.simplefilter(action='ignore', category=SettingWithCopyWarning)
 
